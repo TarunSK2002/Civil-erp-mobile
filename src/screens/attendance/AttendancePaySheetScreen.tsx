@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, Pressable, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, View, Text, TextInput, Pressable, ScrollView, ActivityIndicator, Alert, Modal } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/client';
 import { colors } from '../../theme/colors';
@@ -312,97 +312,46 @@ export default function AttendancePaySheetScreen() {
         {/* 📋 Form Inputs according to calculation mode */}
         <View style={styles.modeFormWrapper}>
           {calcMode !== 'Shift' && (
-            <View style={[styles.formGroup, { marginBottom: 14, zIndex: 11 }]}>
+            <View style={[styles.formGroup, { marginBottom: 14 }]}>
               <Text style={styles.inputLabel}>Person Type / Role</Text>
               <Pressable 
                 style={[styles.dropdownButton, showRoleDropdown && styles.dropdownButtonActive]} 
-                onPress={() => setShowRoleDropdown(!showRoleDropdown)}
+                onPress={() => setShowRoleDropdown(true)}
               >
                 <Text style={selectedPersonType ? styles.dropdownSelectedText : styles.dropdownPlaceholderText}>
                   {selectedPersonType || 'Choose Role'}
                 </Text>
                 <ChevronDown color={colors.dark.textSecondary} size={16} />
               </Pressable>
-              {showRoleDropdown && (
-                <ScrollView style={styles.dropdownMenu} nestedScrollEnabled={true}>
-                  {personTypes?.map((pt: PersonType) => (
-                    <Pressable
-                      key={pt.id}
-                      style={styles.dropdownOption}
-                      onPress={() => {
-                        setSelectedPersonType(pt.Name);
-                        setShowRoleDropdown(false);
-                        if (calcMode === 'Hour') {
-                          setRatePerHour(pt.DailyRate.toString());
-                        }
-                      }}
-                    >
-                      <Text style={styles.dropdownOptionText}>{pt.Name}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              )}
             </View>
           )}
 
           {calcMode === 'Shift' && (
             <View style={styles.formRow}>
-              <View style={[styles.formCol, { flex: 1.2, marginRight: 8, zIndex: 10 }]}>
+              <View style={[styles.formCol, { flex: 1.2, marginRight: 8 }]}>
                 <Text style={styles.inputLabel}>Role</Text>
                 <Pressable 
                   style={[styles.rowDropdownButton, showRoleDropdown && styles.dropdownButtonActive]}
-                  onPress={() => { setShowRoleDropdown(!showRoleDropdown); setShowShiftDropdown(false); }}
+                  onPress={() => { setShowRoleDropdown(true); }}
                 >
                   <Text style={selectedPersonType ? styles.rowDropdownSelectedText : styles.dropdownPlaceholderText} numberOfLines={1}>
                     {selectedPersonType || 'Choose'}
                   </Text>
                   <ChevronDown color={colors.dark.textSecondary} size={14} />
                 </Pressable>
-                {showRoleDropdown && (
-                  <ScrollView style={styles.rowDropdownMenu} nestedScrollEnabled={true}>
-                    {personTypes?.map((pt: PersonType) => (
-                      <Pressable
-                        key={pt.id}
-                        style={styles.dropdownOption}
-                        onPress={() => {
-                          setSelectedPersonType(pt.Name);
-                          setShowRoleDropdown(false);
-                        }}
-                      >
-                        <Text style={styles.dropdownOptionText} numberOfLines={1}>{pt.Name}</Text>
-                      </Pressable>
-                    ))}
-                  </ScrollView>
-                )}
               </View>
 
-              <View style={[styles.formCol, { flex: 1, marginRight: 8, zIndex: 9 }]}>
+              <View style={[styles.formCol, { flex: 1, marginRight: 8 }]}>
                 <Text style={styles.inputLabel}>Shift</Text>
                 <Pressable 
                   style={[styles.rowDropdownButton, showShiftDropdown && styles.dropdownButtonActive]}
-                  onPress={() => { setShowShiftDropdown(!showShiftDropdown); setShowRoleDropdown(false); }}
+                  onPress={() => { setShowShiftDropdown(true); }}
                 >
                   <Text style={selectedShiftType ? styles.rowDropdownSelectedText : styles.dropdownPlaceholderText} numberOfLines={1}>
                     {selectedShiftType || 'Choose'}
                   </Text>
                   <ChevronDown color={colors.dark.textSecondary} size={14} />
                 </Pressable>
-                {showShiftDropdown && (
-                  <ScrollView style={styles.rowDropdownMenu} nestedScrollEnabled={true}>
-                    {shiftTypes?.map((st: ShiftType) => (
-                      <Pressable
-                        key={st.id}
-                        style={styles.dropdownOption}
-                        onPress={() => {
-                          setSelectedShiftType(st.ShiftType);
-                          setShowShiftDropdown(false);
-                        }}
-                      >
-                        <Text style={styles.dropdownOptionText} numberOfLines={1}>{st.ShiftType}</Text>
-                      </Pressable>
-                    ))}
-                  </ScrollView>
-                )}
               </View>
 
               <View style={[styles.formCol, { width: 105 }]}>
@@ -566,6 +515,92 @@ export default function AttendancePaySheetScreen() {
           )}
         </View>
       ) : null}
+      {/* Role Selection Sheet */}
+      <Modal
+        visible={showRoleDropdown}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowRoleDropdown(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowRoleDropdown(false)}>
+          <View style={styles.bottomSheet}>
+            <View style={styles.bottomSheetHeader}>
+              <Text style={styles.bottomSheetTitle}>Select Role</Text>
+              <Pressable onPress={() => setShowRoleDropdown(false)} style={styles.closeSheetBtn}>
+                <X color={colors.dark.textPrimary} size={18} />
+              </Pressable>
+            </View>
+            <ScrollView style={styles.bottomSheetList} nestedScrollEnabled={true}>
+              {personTypes?.map((pt: PersonType) => (
+                <Pressable
+                  key={pt.id}
+                  style={[
+                    styles.bottomSheetOption,
+                    selectedPersonType === pt.Name && styles.bottomSheetOptionActive
+                  ]}
+                  onPress={() => {
+                    setSelectedPersonType(pt.Name);
+                    setShowRoleDropdown(false);
+                    if (calcMode === 'Hour') {
+                      setRatePerHour(pt.DailyRate.toString());
+                    }
+                  }}
+                >
+                  <Text style={[
+                    styles.bottomSheetOptionText,
+                    selectedPersonType === pt.Name && styles.bottomSheetOptionTextActive
+                  ]}>
+                    {pt.Name}
+                  </Text>
+                  {selectedPersonType === pt.Name && <Check color={colors.dark.accent} size={14} />}
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Shift Selection Sheet */}
+      <Modal
+        visible={showShiftDropdown}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowShiftDropdown(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowShiftDropdown(false)}>
+          <View style={styles.bottomSheet}>
+            <View style={styles.bottomSheetHeader}>
+              <Text style={styles.bottomSheetTitle}>Select Shift Duration</Text>
+              <Pressable onPress={() => setShowShiftDropdown(false)} style={styles.closeSheetBtn}>
+                <X color={colors.dark.textPrimary} size={18} />
+              </Pressable>
+            </View>
+            <ScrollView style={styles.bottomSheetList} nestedScrollEnabled={true}>
+              {shiftTypes?.map((st: ShiftType) => (
+                <Pressable
+                  key={st.id}
+                  style={[
+                    styles.bottomSheetOption,
+                    selectedShiftType === st.ShiftType && styles.bottomSheetOptionActive
+                  ]}
+                  onPress={() => {
+                    setSelectedShiftType(st.ShiftType);
+                    setShowShiftDropdown(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.bottomSheetOptionText,
+                    selectedShiftType === st.ShiftType && styles.bottomSheetOptionTextActive
+                  ]}>
+                    {st.ShiftType} (×{st.ShiftMultiplier})
+                  </Text>
+                  {selectedShiftType === st.ShiftType && <Check color={colors.dark.accent} size={14} />}
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
     </ScrollView>
   );
 }
@@ -828,19 +863,63 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 1,
   },
-  rowDropdownMenu: {
-    position: 'absolute',
-    top: 50,
-    left: 0,
-    right: 0,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheet: {
     backgroundColor: colors.dark.bgSecondary,
-    borderWidth: 1,
-    borderColor: colors.dark.border,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '60%',
+    borderTopWidth: 1,
+    borderTopColor: colors.dark.border,
+  },
+  bottomSheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.dark.border,
+  },
+  bottomSheetTitle: {
+    color: colors.dark.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  closeSheetBtn: {
+    padding: 4,
+  },
+  bottomSheetList: {
+    marginBottom: 10,
+  },
+  bottomSheetOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.dark.border,
     borderRadius: 8,
-    maxHeight: 180,
-    zIndex: 1000,
-    elevation: 5,
-    overflow: 'hidden',
+    marginBottom: 6,
+  },
+  bottomSheetOptionActive: {
+    backgroundColor: 'rgba(255, 179, 0, 0.08)',
+    borderColor: colors.dark.accent,
+    borderWidth: 1,
+  },
+  bottomSheetOptionText: {
+    color: colors.dark.textPrimary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  bottomSheetOptionTextActive: {
+    color: colors.dark.accent,
   },
   rowStepperContainer: {
     flexDirection: 'row',
