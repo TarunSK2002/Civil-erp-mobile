@@ -356,12 +356,37 @@ export default function AttendancePaySheetScreen() {
 
               <View style={{ marginTop: 14 }}>
                 <Text style={styles.inputLabel}>Labour Count</Text>
-                <TextInput
-                  style={styles.textInputStyle}
-                  value={labourCount}
-                  onChangeText={setLabourCount}
-                  keyboardType="numeric"
-                />
+                <View style={styles.stepperContainer}>
+                  <Pressable 
+                    style={styles.stepperButton} 
+                    onPress={() => {
+                      const current = parseInt(labourCount) || 1;
+                      if (current > 1) {
+                        setLabourCount((current - 1).toString());
+                      }
+                    }}
+                  >
+                    <Text style={styles.stepperButtonText}>−</Text>
+                  </Pressable>
+                  <TextInput
+                    style={styles.stepperInput}
+                    value={labourCount}
+                    onChangeText={(val) => {
+                      const sanitized = val.replace(/[^0-9]/g, '');
+                      setLabourCount(sanitized);
+                    }}
+                    keyboardType="number-pad"
+                  />
+                  <Pressable 
+                    style={styles.stepperButton} 
+                    onPress={() => {
+                      const current = parseInt(labourCount) || 1;
+                      setLabourCount((current + 1).toString());
+                    }}
+                  >
+                    <Text style={styles.stepperButtonText}>+</Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
           )}
@@ -684,7 +709,7 @@ const styles = StyleSheet.create({
   },
   formChipActive: {
     borderColor: colors.dark.accent,
-    backgroundColor: 'rgba(255, 179, 0, 0.05)',
+    backgroundColor: colors.dark.accent,
   },
   formChipText: {
     color: colors.dark.textSecondary,
@@ -692,7 +717,39 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   formChipTextActive: {
-    color: colors.dark.accent,
+    color: '#0F0F1A',
+  },
+  stepperContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.dark.bgInput,
+    borderWidth: 1,
+    borderColor: colors.dark.border,
+    borderRadius: 10,
+    overflow: 'hidden',
+    width: 160,
+    marginTop: 6,
+  },
+  stepperButton: {
+    width: 46,
+    height: 44,
+    backgroundColor: colors.dark.bgCard,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperButtonText: {
+    color: colors.dark.textPrimary,
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  stepperInput: {
+    flex: 1,
+    height: 44,
+    color: colors.dark.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+    padding: 0,
   },
   rowWrapper: {
     flexDirection: 'row',
