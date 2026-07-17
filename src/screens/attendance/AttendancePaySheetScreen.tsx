@@ -328,7 +328,7 @@ export default function AttendancePaySheetScreen() {
 
           {calcMode === 'Shift' && (
             <View style={styles.formRow}>
-              <View style={[styles.formCol, { flex: 1.2, marginRight: 8 }]}>
+              <View style={[styles.formCol, { width: '38%' }]}>
                 <Text style={styles.inputLabel}>Role</Text>
                 <Pressable 
                   style={[styles.rowDropdownButton, showRoleDropdown && styles.dropdownButtonActive]}
@@ -341,7 +341,7 @@ export default function AttendancePaySheetScreen() {
                 </Pressable>
               </View>
 
-              <View style={[styles.formCol, { flex: 1, marginRight: 8 }]}>
+              <View style={[styles.formCol, { width: '32%' }]}>
                 <Text style={styles.inputLabel}>Shift</Text>
                 <Pressable 
                   style={[styles.rowDropdownButton, showShiftDropdown && styles.dropdownButtonActive]}
@@ -354,7 +354,7 @@ export default function AttendancePaySheetScreen() {
                 </Pressable>
               </View>
 
-              <View style={[styles.formCol, { width: 105 }]}>
+              <View style={[styles.formCol, { width: '26%' }]}>
                 <Text style={styles.inputLabel}>Count</Text>
                 <View style={styles.rowStepperContainer}>
                   <Pressable 
@@ -839,6 +839,7 @@ const styles = StyleSheet.create({
   },
   formRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'flex-start',
     zIndex: 100,
   },
@@ -931,10 +932,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     height: 40,
     marginTop: 6,
-    width: 105,
+    width: '100%',
   },
   rowStepperButton: {
-    width: 32,
+    width: 28,
     height: 38,
     backgroundColor: colors.dark.bgCard,
     alignItems: 'center',
