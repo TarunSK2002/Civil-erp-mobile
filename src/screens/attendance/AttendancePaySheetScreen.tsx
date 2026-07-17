@@ -727,11 +727,11 @@ const styles = StyleSheet.create({
     borderColor: colors.dark.border,
     borderRadius: 10,
     overflow: 'hidden',
-    width: 160,
+    width: 150,
     marginTop: 6,
   },
   stepperButton: {
-    width: 46,
+    width: 44,
     height: 44,
     backgroundColor: colors.dark.bgCard,
     alignItems: 'center',
@@ -743,7 +743,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   stepperInput: {
-    flex: 1,
+    width: 62,
     height: 44,
     color: colors.dark.textPrimary,
     fontSize: 16,
