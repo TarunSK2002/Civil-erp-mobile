@@ -43,6 +43,8 @@ export default function AttendancePaySheetScreen() {
   const [calcMode, setCalcMode] = useState<'Shift' | 'Hour' | 'SqFt'>('Shift');
   const [selectedPersonType, setSelectedPersonType] = useState('');
   const [selectedShiftType, setSelectedShiftType] = useState('');
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [showShiftDropdown, setShowShiftDropdown] = useState(false);
   const [labourCount, setLabourCount] = useState('1');
   const [hours, setHours] = useState('');
   const [ratePerHour, setRatePerHour] = useState('');
@@ -309,56 +311,105 @@ export default function AttendancePaySheetScreen() {
 
         {/* 📋 Form Inputs according to calculation mode */}
         <View style={styles.modeFormWrapper}>
-          <Text style={styles.inputLabel}>Person Type / Role</Text>
-          <View style={styles.chipsRow}>
-            {personTypes?.map((pt: PersonType) => (
-              <Pressable
-                key={pt.id}
-                style={[
-                  styles.formChip,
-                  selectedPersonType === pt.Name && styles.formChipActive
-                ]}
-                onPress={() => {
-                  setSelectedPersonType(pt.Name);
-                  if (calcMode === 'Hour') {
-                    setRatePerHour(pt.DailyRate.toString());
-                  }
-                }}
+          {calcMode !== 'Shift' && (
+            <View style={[styles.formGroup, { marginBottom: 14, zIndex: 11 }]}>
+              <Text style={styles.inputLabel}>Person Type / Role</Text>
+              <Pressable 
+                style={[styles.dropdownButton, showRoleDropdown && styles.dropdownButtonActive]} 
+                onPress={() => setShowRoleDropdown(!showRoleDropdown)}
               >
-                <Text style={[
-                  styles.formChipText,
-                  selectedPersonType === pt.Name && styles.formChipTextActive
-                ]}>{pt.Name}</Text>
+                <Text style={selectedPersonType ? styles.dropdownSelectedText : styles.dropdownPlaceholderText}>
+                  {selectedPersonType || 'Choose Role'}
+                </Text>
+                <ChevronDown color={colors.dark.textSecondary} size={16} />
               </Pressable>
-            ))}
-          </View>
+              {showRoleDropdown && (
+                <ScrollView style={styles.dropdownMenu} nestedScrollEnabled={true}>
+                  {personTypes?.map((pt: PersonType) => (
+                    <Pressable
+                      key={pt.id}
+                      style={styles.dropdownOption}
+                      onPress={() => {
+                        setSelectedPersonType(pt.Name);
+                        setShowRoleDropdown(false);
+                        if (calcMode === 'Hour') {
+                          setRatePerHour(pt.DailyRate.toString());
+                        }
+                      }}
+                    >
+                      <Text style={styles.dropdownOptionText}>{pt.Name}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+          )}
 
           {calcMode === 'Shift' && (
-            <View style={{ marginTop: 14 }}>
-              <Text style={styles.inputLabel}>Shift Value</Text>
-              <View style={styles.chipsRow}>
-                {shiftTypes?.map((st: ShiftType) => (
-                  <Pressable
-                    key={st.id}
-                    style={[
-                      styles.formChip,
-                      selectedShiftType === st.ShiftType && styles.formChipActive
-                    ]}
-                    onPress={() => setSelectedShiftType(st.ShiftType)}
-                  >
-                    <Text style={[
-                      styles.formChipText,
-                      selectedShiftType === st.ShiftType && styles.formChipTextActive
-                    ]}>{st.ShiftType} (×{st.ShiftMultiplier})</Text>
-                  </Pressable>
-                ))}
+            <View style={styles.formRow}>
+              <View style={[styles.formCol, { flex: 1.2, marginRight: 8, zIndex: 10 }]}>
+                <Text style={styles.inputLabel}>Role</Text>
+                <Pressable 
+                  style={[styles.rowDropdownButton, showRoleDropdown && styles.dropdownButtonActive]}
+                  onPress={() => { setShowRoleDropdown(!showRoleDropdown); setShowShiftDropdown(false); }}
+                >
+                  <Text style={selectedPersonType ? styles.rowDropdownSelectedText : styles.dropdownPlaceholderText} numberOfLines={1}>
+                    {selectedPersonType || 'Choose'}
+                  </Text>
+                  <ChevronDown color={colors.dark.textSecondary} size={14} />
+                </Pressable>
+                {showRoleDropdown && (
+                  <ScrollView style={styles.rowDropdownMenu} nestedScrollEnabled={true}>
+                    {personTypes?.map((pt: PersonType) => (
+                      <Pressable
+                        key={pt.id}
+                        style={styles.dropdownOption}
+                        onPress={() => {
+                          setSelectedPersonType(pt.Name);
+                          setShowRoleDropdown(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownOptionText} numberOfLines={1}>{pt.Name}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                )}
               </View>
 
-              <View style={{ marginTop: 14 }}>
-                <Text style={styles.inputLabel}>Labour Count</Text>
-                <View style={styles.stepperContainer}>
+              <View style={[styles.formCol, { flex: 1, marginRight: 8, zIndex: 9 }]}>
+                <Text style={styles.inputLabel}>Shift</Text>
+                <Pressable 
+                  style={[styles.rowDropdownButton, showShiftDropdown && styles.dropdownButtonActive]}
+                  onPress={() => { setShowShiftDropdown(!showShiftDropdown); setShowRoleDropdown(false); }}
+                >
+                  <Text style={selectedShiftType ? styles.rowDropdownSelectedText : styles.dropdownPlaceholderText} numberOfLines={1}>
+                    {selectedShiftType || 'Choose'}
+                  </Text>
+                  <ChevronDown color={colors.dark.textSecondary} size={14} />
+                </Pressable>
+                {showShiftDropdown && (
+                  <ScrollView style={styles.rowDropdownMenu} nestedScrollEnabled={true}>
+                    {shiftTypes?.map((st: ShiftType) => (
+                      <Pressable
+                        key={st.id}
+                        style={styles.dropdownOption}
+                        onPress={() => {
+                          setSelectedShiftType(st.ShiftType);
+                          setShowShiftDropdown(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownOptionText} numberOfLines={1}>{st.ShiftType}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+
+              <View style={[styles.formCol, { width: 105 }]}>
+                <Text style={styles.inputLabel}>Count</Text>
+                <View style={styles.rowStepperContainer}>
                   <Pressable 
-                    style={styles.stepperButton} 
+                    style={styles.rowStepperButton} 
                     onPress={() => {
                       const current = parseInt(labourCount) || 1;
                       if (current > 1) {
@@ -366,10 +417,10 @@ export default function AttendancePaySheetScreen() {
                       }
                     }}
                   >
-                    <Text style={styles.stepperButtonText}>−</Text>
+                    <Text style={styles.rowStepperButtonText}>−</Text>
                   </Pressable>
                   <TextInput
-                    style={styles.stepperInput}
+                    style={styles.rowStepperInput}
                     value={labourCount}
                     onChangeText={(val) => {
                       const sanitized = val.replace(/[^0-9]/g, '');
@@ -378,13 +429,13 @@ export default function AttendancePaySheetScreen() {
                     keyboardType="number-pad"
                   />
                   <Pressable 
-                    style={styles.stepperButton} 
+                    style={styles.rowStepperButton} 
                     onPress={() => {
                       const current = parseInt(labourCount) || 1;
                       setLabourCount((current + 1).toString());
                     }}
                   >
-                    <Text style={styles.stepperButtonText}>+</Text>
+                    <Text style={styles.rowStepperButtonText}>+</Text>
                   </Pressable>
                 </View>
               </View>
@@ -747,6 +798,79 @@ const styles = StyleSheet.create({
     height: 44,
     color: colors.dark.textPrimary,
     fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+    padding: 0,
+  },
+  formRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    zIndex: 100,
+  },
+  formCol: {
+    position: 'relative',
+  },
+  rowDropdownButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.dark.bgInput,
+    borderWidth: 1,
+    borderColor: colors.dark.border,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    height: 40,
+    marginTop: 6,
+  },
+  rowDropdownSelectedText: {
+    color: colors.dark.textPrimary,
+    fontSize: 12,
+    fontWeight: '600',
+    flex: 1,
+  },
+  rowDropdownMenu: {
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.dark.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.dark.border,
+    borderRadius: 8,
+    maxHeight: 180,
+    zIndex: 1000,
+    elevation: 5,
+    overflow: 'hidden',
+  },
+  rowStepperContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.dark.bgInput,
+    borderWidth: 1,
+    borderColor: colors.dark.border,
+    borderRadius: 8,
+    overflow: 'hidden',
+    height: 40,
+    marginTop: 6,
+    width: 105,
+  },
+  rowStepperButton: {
+    width: 32,
+    height: 38,
+    backgroundColor: colors.dark.bgCard,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowStepperButtonText: {
+    color: colors.dark.textPrimary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  rowStepperInput: {
+    flex: 1,
+    height: 38,
+    color: colors.dark.textPrimary,
+    fontSize: 14,
     fontWeight: '700',
     textAlign: 'center',
     padding: 0,
