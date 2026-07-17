@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/client';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
-import { Calendar, Plus, Trash2, HardHat, ChevronDown, Check, Briefcase, PlusCircle, Clock, Ruler } from 'lucide-react-native';
+import { Calendar, Plus, Trash2, HardHat, ChevronDown, Check, Briefcase, PlusCircle, Clock, Ruler, X } from 'lucide-react-native';
 
 interface ShiftType {
   id: number;
