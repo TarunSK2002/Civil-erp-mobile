@@ -4,7 +4,7 @@ import { useAuth } from './AuthContext';
 import api from '../api/client';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
-import logo from '../../assets/logo.png'; // Make sure to match default location
+const logo = require('../../assets/logo.png'); // Make sure to match default location
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -39,7 +39,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <View style={styles.card} className="fade-in">
+      <View style={styles.card}>
         <View style={styles.logoContainer}>
           <Image source={logo} style={styles.logo} resizeMode="cover" />
         </View>
