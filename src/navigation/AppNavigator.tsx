@@ -6,16 +6,18 @@ import { useAuth } from '../auth/AuthContext';
 import LoginScreen from '../auth/LoginScreen';
 import DashboardScreen from '../screens/dashboard/DashboardScreen';
 import { colors } from '../theme/colors';
-import { View, ActivityIndicator, Text } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { LayoutDashboard, Users, Home, HardHat, DollarSign } from 'lucide-react-native';
 
 import SiteListScreen from '../screens/sites/SiteListScreen';
 import SiteDetailScreen from '../screens/sites/SiteDetailScreen';
+import ClientListScreen from '../screens/clients/ClientListScreen';
+import AttendancePaySheetScreen from '../screens/attendance/AttendancePaySheetScreen';
+import PaymentListScreen from '../screens/payments/PaymentListScreen';
+
+// ──── Sites Stack ────────────────────────────────────────────────────────────
 
 const SitesStack = createNativeStackNavigator();
-const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
-
 function SitesStackNavigator() {
   return (
     <SitesStack.Navigator screenOptions={{ headerShown: false }}>
@@ -25,21 +27,31 @@ function SitesStackNavigator() {
   );
 }
 
-// Temporary stub pages for navigation setup
-const LabourPlaceholder = () => (
-  <View style={{ flex: 1, backgroundColor: colors.dark.bgPrimary, justifyContent: 'center', alignItems: 'center' }}>
-    <Text style={{ color: colors.dark.textPrimary }}>Labour Page Placeholder</Text>
-  </View>
-);
+// ──── Finance Stack ───────────────────────────────────────────────────────────
 
-import ClientListScreen from '../screens/clients/ClientListScreen';
-import AttendancePaySheetScreen from '../screens/attendance/AttendancePaySheetScreen';
+const FinanceStack = createNativeStackNavigator();
+function FinanceStackNavigator() {
+  return (
+    <FinanceStack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.dark.bgSecondary },
+        headerTintColor: colors.dark.textPrimary,
+        headerTitleStyle: { fontWeight: '600' },
+        headerShadowVisible: false,
+      }}
+    >
+      <FinanceStack.Screen
+        name="PaymentList"
+        component={PaymentListScreen}
+        options={{ title: 'Payments' }}
+      />
+    </FinanceStack.Navigator>
+  );
+}
 
-const FinancePlaceholder = () => (
-  <View style={{ flex: 1, backgroundColor: colors.dark.bgPrimary, justifyContent: 'center', alignItems: 'center' }}>
-    <Text style={{ color: colors.dark.textPrimary }}>Finance Page Placeholder</Text>
-  </View>
-);
+// ──── Tab Navigator ──────────────────────────────────────────────────────────
+
+const Tab = createBottomTabNavigator();
 
 function TabNavigator() {
   return (
@@ -61,33 +73,30 @@ function TabNavigator() {
           elevation: 0,
         },
         headerTintColor: colors.dark.textPrimary,
-        headerTitleStyle: {
-          fontWeight: '600',
-        },
+        headerTitleStyle: { fontWeight: '600' },
         tabBarIcon: ({ color, size }) => {
-          if (route.name === 'Dashboard') {
-            return <LayoutDashboard color={color} size={size} />;
-          } else if (route.name === 'Sites') {
-            return <Home color={color} size={size} />;
-          } else if (route.name === 'Labour') {
-            return <HardHat color={color} size={size} />;
-          } else if (route.name === 'Clients') {
-            return <Users color={color} size={size} />;
-          } else if (route.name === 'Finance') {
-            return <DollarSign color={color} size={size} />;
-          }
+          if (route.name === 'Dashboard') return <LayoutDashboard color={color} size={size} />;
+          if (route.name === 'Sites') return <Home color={color} size={size} />;
+          if (route.name === 'Labour') return <HardHat color={color} size={size} />;
+          if (route.name === 'Clients') return <Users color={color} size={size} />;
+          if (route.name === 'Finance') return <DollarSign color={color} size={size} />;
           return null;
         },
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Sites" component={SitesStackNavigator} options={{ headerShown: false }} />
-      <Tab.Screen name="Labour" component={AttendancePaySheetScreen} />
+      {/* Labour tab: directly shows AttendancePaySheetScreen (same as before) */}
+      <Tab.Screen name="Labour" component={AttendancePaySheetScreen} options={{ headerShown: false }} />
       <Tab.Screen name="Clients" component={ClientListScreen} />
-      <Tab.Screen name="Finance" component={FinancePlaceholder} />
+      <Tab.Screen name="Finance" component={FinanceStackNavigator} options={{ headerShown: false }} />
     </Tab.Navigator>
   );
 }
+
+// ──── Root Navigator ─────────────────────────────────────────────────────────
+
+const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   const { isAuthenticated, loading } = useAuth();

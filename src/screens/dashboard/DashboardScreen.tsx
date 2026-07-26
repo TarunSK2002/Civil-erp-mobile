@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, Pressable, RefreshControl, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../auth/AuthContext';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
@@ -20,6 +21,7 @@ import {
 
 export default function DashboardScreen() {
   const { user } = useAuth();
+  const navigation = useNavigation<any>();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -129,21 +131,21 @@ export default function DashboardScreen() {
       {/* Quick Action Operations Dashboard Sections */}
       <Text style={styles.sectionTitle}>Quick Operations</Text>
       <View style={styles.actionGrid}>
-        <Pressable style={styles.actionItem}>
+        <Pressable style={styles.actionItem} onPress={() => navigation.navigate('Labour')}>
           <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(244, 63, 94, 0.12)' }]}>
             <ClipboardList color="#f43f5e" size={24} />
           </View>
           <Text style={styles.actionLabel}>Attendance</Text>
         </Pressable>
 
-        <Pressable style={styles.actionItem}>
+        <Pressable style={styles.actionItem} onPress={() => navigation.navigate('Labour')}>
           <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
             <FileSpreadsheet color="#8b5cf6" size={24} />
           </View>
           <Text style={styles.actionLabel}>Pay Sheets</Text>
         </Pressable>
 
-        <Pressable style={styles.actionItem}>
+        <Pressable style={styles.actionItem} onPress={() => navigation.navigate('Finance')}>
           <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
             <CreditCard color="#10b981" size={24} />
           </View>

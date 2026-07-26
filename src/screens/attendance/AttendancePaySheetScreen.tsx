@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, Pressable, ScrollView, ActivityIndicator, Alert, Modal } from 'react-native';
+import { StyleSheet, View, Text, TextInput, Pressable, ScrollView, ActivityIndicator, Alert, Modal, Platform } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/client';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
-import { Calendar, Plus, Trash2, HardHat, ChevronDown, Check, Briefcase, PlusCircle, Clock, Ruler, X, TrendingUp, Coffee, Package } from 'lucide-react-native';
+import { Calendar, Plus, Trash2, HardHat, ChevronDown, Check, Briefcase, PlusCircle, Clock, Ruler, X, TrendingUp, Coffee, Package, Settings } from 'lucide-react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface ShiftType {
   id: number;
@@ -31,6 +32,19 @@ export default function AttendancePaySheetScreen() {
   const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
   const [entryDate, setEntryDate] = useState(new Date().toISOString().split('T')[0]);
   
+  // Date Picker State & Handlers
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const showDatePicker = () => setDatePickerVisibility(true);
+  const hideDatePicker = () => setDatePickerVisibility(false);
+  const getInitialDatePickerDate = () => {
+    if (!entryDate) return new Date();
+    const parts = entryDate.split('-');
+    if (parts.length === 3) {
+      return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }
+    return new Date();
+  };
+  
   // Selection references
   const [selectedSiteId, setSelectedSiteId] = useState('');
   const [selectedPayeeId, setSelectedPayeeId] = useState('');
@@ -52,6 +66,26 @@ export default function AttendancePaySheetScreen() {
   const [activeTab, setActiveTab] = useState<'attendance' | 'misc' | 'lifting'>('attendance');
   const [selectedSectionId, setSelectedSectionId] = useState('');
 
+  // Sheet Creation State
+  const [isCreateSheetVisible, setIsCreateSheetVisible] = useState(false);
+  const [newSheetTitle, setNewSheetTitle] = useState('');
+  const [newSheetStartDate, setNewSheetStartDate] = useState('');
+  const [newSheetEndDate, setNewSheetEndDate] = useState('');
+
+  // Master Settings State
+  const [isMasterSettingsVisible, setIsMasterSettingsVisible] = useState(false);
+  const [editingMaster, setEditingMaster] = useState({
+    TeaExpense: '20',
+    BusExpense: '50',
+    LatestAppVersion: '3.2.0',
+    UpdateLink: 'https://drive.google.com'
+  });
+
+  // Lifting Rates State
+  const [isLiftingRatesVisible, setIsLiftingRatesVisible] = useState(false);
+  const [editingLiftingRates, setEditingLiftingRates] = useState<Record<string, string>>({});
+  const [selectedLiftingMaterial, setSelectedLiftingMaterial] = useState<'M.Sand' | 'Jally' | 'Sengal'>('M.Sand');
+
   // Misc State
   const [profitPercent, setProfitPercent] = useState('');
   const [profitAmount, setProfitAmount] = useState('');
@@ -69,10 +103,17 @@ export default function AttendancePaySheetScreen() {
     queryKey: ['attendance-sheets'],
     queryFn: async () => {
       const res = await api.get('/attendance-sheets');
-      if (res.data.length > 0 && !selectedSheetId) {
-        setSelectedSheetId(res.data[0].id);
+      // Sort sheets by start date DESC, then ID DESC so that the latest sheet always comes first
+      const sorted = [...res.data].sort((a, b) => {
+        if (b.WeekStartDate !== a.WeekStartDate) {
+          return b.WeekStartDate.localeCompare(a.WeekStartDate);
+        }
+        return b.id - a.id;
+      });
+      if (sorted.length > 0 && !selectedSheetId) {
+        setSelectedSheetId(sorted[0].id);
       }
-      return res.data;
+      return sorted;
     }
   });
 
@@ -281,6 +322,104 @@ export default function AttendancePaySheetScreen() {
     }
   });
 
+  // Sync masterSettings data with local editing state
+  React.useEffect(() => {
+    if (masterSettings) {
+      setEditingMaster({
+        TeaExpense: masterSettings.TeaExpense ? masterSettings.TeaExpense.toString() : '20',
+        BusExpense: masterSettings.BusExpense ? masterSettings.BusExpense.toString() : '50',
+        LatestAppVersion: masterSettings.LatestAppVersion ? masterSettings.LatestAppVersion.toString() : '3.2.0',
+        UpdateLink: masterSettings.UpdateLink ? masterSettings.UpdateLink.toString() : 'https://drive.google.com',
+      });
+    }
+  }, [masterSettings]);
+
+  // Sync liftingRates data with local editing state
+  React.useEffect(() => {
+    if (liftingRates) {
+      const ratesMap: Record<string, string> = {};
+      liftingRates.forEach((r: any) => {
+        ratesMap[`${r.MaterialType}_${r.Floor}`] = r.Rate.toString();
+      });
+      setEditingLiftingRates(ratesMap);
+    }
+  }, [liftingRates]);
+
+  const saveSheetMutation = useMutation({
+    mutationFn: async () => {
+      if (!newSheetTitle || !newSheetStartDate || !newSheetEndDate) {
+        throw new Error('All fields are required');
+      }
+      const res = await api.post('/attendance-sheets', {
+        Title: newSheetTitle,
+        WeekStartDate: newSheetStartDate,
+        WeekEndDate: newSheetEndDate,
+      });
+      return res.data;
+    },
+    onSuccess: (data) => {
+      Alert.alert('Success', 'Sheet created successfully');
+      queryClient.invalidateQueries({ queryKey: ['attendance-sheets'] });
+      if (data && data.id) {
+        setSelectedSheetId(data.id);
+      }
+      setIsCreateSheetVisible(false);
+      setNewSheetTitle('');
+      setNewSheetStartDate('');
+      setNewSheetEndDate('');
+    },
+    onError: (err: any) => {
+      Alert.alert('Error', err.response?.data?.msg || err.message || 'Failed to create sheet');
+    }
+  });
+
+  const saveMasterSettingsMutation = useMutation({
+    mutationFn: async () => {
+      await Promise.all([
+        api.put('/master-settings/TeaExpense', { value: editingMaster.TeaExpense }),
+        api.put('/master-settings/BusExpense', { value: editingMaster.BusExpense }),
+      ]);
+    },
+    onSuccess: () => {
+      Alert.alert('Success', 'Master settings updated');
+      queryClient.invalidateQueries({ queryKey: ['master-settings'] });
+      setIsMasterSettingsVisible(false);
+    },
+    onError: (err: any) => {
+      Alert.alert('Error', err.response?.data?.msg || err.message || 'Failed to save master settings');
+    }
+  });
+
+  const saveLiftingRatesMutation = useMutation({
+    mutationFn: async () => {
+      const mats = ['M.Sand', 'Jally', 'Sengal'];
+      const floors = ['G.Floor', '1st floor', '2nd floor', '3rd floor'];
+      const promises: Promise<any>[] = [];
+      mats.forEach(mat => {
+        floors.forEach(floor => {
+          const key = `${mat}_${floor}`;
+          const rate = editingLiftingRates[key] !== undefined ? parseFloat(editingLiftingRates[key]) : 0;
+          promises.push(
+            api.post('/attendance-sheets/lifting/rates', {
+              MaterialType: mat,
+              Floor: floor,
+              Rate: rate
+            })
+          );
+        });
+      });
+      await Promise.all(promises);
+    },
+    onSuccess: () => {
+      Alert.alert('Success', 'Lifting rates updated');
+      queryClient.invalidateQueries({ queryKey: ['lifting-rates'] });
+      setIsLiftingRatesVisible(false);
+    },
+    onError: (err: any) => {
+      Alert.alert('Error', err.response?.data?.msg || err.message || 'Failed to save lifting rates');
+    }
+  });
+
   const getSelectedCellTotal = () => {
     if (!sheetDetails?.grid || !selectedPayeeId || !selectedSiteId) return 0;
     const key = `${selectedPayeeId}_${selectedSiteId}`;
@@ -416,6 +555,14 @@ export default function AttendancePaySheetScreen() {
             <Text style={styles.bannerSubtitle}>Record daily logs & contractor values</Text>
           </View>
         </View>
+        <View style={styles.headerRightActions}>
+          <Pressable style={styles.headerActionButton} onPress={() => setIsLiftingRatesVisible(true)}>
+            <Ruler color={colors.dark.accent} size={18} />
+          </Pressable>
+          <Pressable style={styles.headerActionButton} onPress={() => setIsMasterSettingsVisible(true)}>
+            <Settings color={colors.dark.accent} size={18} />
+          </Pressable>
+        </View>
       </View>
 
       {/* 📅 Weeks horizontal chip scroll */}
@@ -426,6 +573,35 @@ export default function AttendancePaySheetScreen() {
         <ActivityIndicator size="small" color={colors.dark.accent} style={{ marginVertical: 10 }} />
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sheetSelectorRow}>
+          <Pressable
+            style={[
+              styles.sheetChip,
+              {
+                backgroundColor: colors.dark.accent + '15',
+                borderColor: colors.dark.accent,
+                borderStyle: 'dashed',
+                borderWidth: 1
+              }
+            ]}
+            onPress={() => {
+              // Pre-populate with typical dates: start = Monday, end = Sunday of current week
+              const today = new Date();
+              const day = today.getDay();
+              const diffToMonday = today.getDate() - day + (day === 0 ? -6 : 1);
+              const monday = new Date(today.setDate(diffToMonday));
+              const sunday = new Date(monday);
+              sunday.setDate(monday.getDate() + 6);
+              
+              setNewSheetStartDate(monday.toISOString().split('T')[0]);
+              setNewSheetEndDate(sunday.toISOString().split('T')[0]);
+              setNewSheetTitle(`Week ${monday.getDate()} ${monday.toLocaleString('default', { month: 'short' })} - ${sunday.getDate()} ${sunday.toLocaleString('default', { month: 'short' })}`);
+              setIsCreateSheetVisible(true);
+            }}
+          >
+            <Text style={[styles.sheetChipText, { color: colors.dark.accent, fontWeight: '700' }]}>
+              + New Sheet
+            </Text>
+          </Pressable>
           {sheets?.map((s) => (
             <Pressable
               key={s.id}
@@ -438,7 +614,12 @@ export default function AttendancePaySheetScreen() {
               <Text style={[
                 styles.sheetChipText,
                 selectedSheetId === s.id && styles.sheetChipTextActive
-              ]}>{s.Title}</Text>
+              ]}>
+                {s.Title}
+                {s.WeekStartDate && s.WeekEndDate ? (
+                  ` (${s.WeekStartDate.split('-')[2]}/${s.WeekStartDate.split('-')[1]} - ${s.WeekEndDate.split('-')[2]}/${s.WeekEndDate.split('-')[1]})`
+                ) : ''}
+              </Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -480,16 +661,40 @@ export default function AttendancePaySheetScreen() {
         {/* Date parameter */}
         <View style={styles.formGroup}>
           <Text style={styles.inputLabel}>Date (YYYY-MM-DD)</Text>
-          <View style={styles.dateInputContainer}>
-            <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
-            <TextInput
-              style={styles.textInputStyle}
-              value={entryDate}
-              onChangeText={setEntryDate}
-              placeholder="e.g. 2026-07-16"
-              placeholderTextColor={colors.dark.textMuted}
-            />
-          </View>
+          {Platform.OS === 'web' ? (
+            <View style={styles.dateInputContainer}>
+              <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
+              <Text style={styles.dropdownSelectedText}>{entryDate}</Text>
+              <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
+              <input
+                type="date"
+                value={entryDate}
+                onChange={(e) => setEntryDate(e.target.value)}
+                onClick={(e: any) => {
+                  try {
+                    e.currentTarget.showPicker();
+                  } catch (err) {}
+                }}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  opacity: 0,
+                  cursor: 'pointer',
+                  border: 'none',
+                  zIndex: 99,
+                }}
+              />
+            </View>
+          ) : (
+            <Pressable style={styles.dateInputContainer} onPress={showDatePicker}>
+              <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
+              <Text style={styles.dropdownSelectedText}>{entryDate}</Text>
+              <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
+            </Pressable>
+          )}
         </View>
 
         {/* 🏢 Site Selector Dropdown */}
@@ -1120,6 +1325,310 @@ export default function AttendancePaySheetScreen() {
           </View>
         </View>
       ) : null}
+      {isDatePickerVisible && (
+        <DateTimePicker
+          value={getInitialDatePickerDate()}
+          mode="date"
+          display="default"
+          onValueChange={(event, date) => {
+            if (date) {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              setEntryDate(`${year}-${month}-${day}`);
+            }
+            setDatePickerVisibility(false);
+          }}
+          onDismiss={() => {
+            setDatePickerVisibility(false);
+          }}
+        />
+      )}
+
+      {/* 🧾 Create Sheet Modal */}
+      <Modal
+        visible={isCreateSheetVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsCreateSheetVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.bottomSheet}>
+            <View style={styles.bottomSheetHeader}>
+              <Text style={styles.bottomSheetTitle}>Create New Attendance Sheet</Text>
+              <Pressable style={styles.closeSheetBtn} onPress={() => setIsCreateSheetVisible(false)}>
+                <X color={colors.dark.textSecondary} size={20} />
+              </Pressable>
+            </View>
+
+            <ScrollView style={{ marginBottom: 20 }}>
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>Sheet Title</Text>
+                <View style={[styles.masterInputContainer, { maxWidth: 250 }]}>
+                  <TextInput
+                    style={styles.masterTextInput}
+                    value={newSheetTitle}
+                    onChangeText={setNewSheetTitle}
+                    placeholder="e.g. Week 30 - July 2026"
+                    placeholderTextColor={colors.dark.textMuted}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>Week Start Date (YYYY-MM-DD)</Text>
+                {Platform.OS === 'web' ? (
+                  <View style={[styles.dateInputContainer, { maxWidth: 250 }]}>
+                    <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
+                    <Text style={styles.dropdownSelectedText}>{newSheetStartDate}</Text>
+                    <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
+                    <input
+                      type="date"
+                      value={newSheetStartDate}
+                      onChange={(e) => {
+                        const dateVal = e.target.value;
+                        setNewSheetStartDate(dateVal);
+                        if (dateVal) {
+                          const d = new Date(dateVal);
+                          d.setDate(d.getDate() + 6);
+                          setNewSheetEndDate(d.toISOString().split('T')[0]);
+                        }
+                      }}
+                      onClick={(e: any) => {
+                        try {
+                          e.currentTarget.showPicker();
+                        } catch (err) {}
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        opacity: 0,
+                        cursor: 'pointer',
+                        border: 'none',
+                        zIndex: 99,
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={[styles.masterInputContainer, { maxWidth: 250 }]}>
+                    <TextInput
+                      style={styles.masterTextInput}
+                      value={newSheetStartDate}
+                      onChangeText={setNewSheetStartDate}
+                      placeholder="YYYY-MM-DD"
+                      placeholderTextColor={colors.dark.textMuted}
+                    />
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>Week End Date (YYYY-MM-DD)</Text>
+                {Platform.OS === 'web' ? (
+                  <View style={[styles.dateInputContainer, { maxWidth: 250 }]}>
+                    <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
+                    <Text style={styles.dropdownSelectedText}>{newSheetEndDate}</Text>
+                    <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
+                    <input
+                      type="date"
+                      value={newSheetEndDate}
+                      onChange={(e) => setNewSheetEndDate(e.target.value)}
+                      onClick={(e: any) => {
+                        try {
+                          e.currentTarget.showPicker();
+                        } catch (err) {}
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        opacity: 0,
+                        cursor: 'pointer',
+                        border: 'none',
+                        zIndex: 99,
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={[styles.masterInputContainer, { maxWidth: 250 }]}>
+                    <TextInput
+                      style={styles.masterTextInput}
+                      value={newSheetEndDate}
+                      onChangeText={setNewSheetEndDate}
+                      placeholder="YYYY-MM-DD"
+                      placeholderTextColor={colors.dark.textMuted}
+                    />
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+
+            <Pressable
+              style={[
+                styles.submitButtonLifting,
+                (!newSheetTitle || !newSheetStartDate || !newSheetEndDate) && styles.submitButtonDisabled
+              ]}
+              onPress={() => saveSheetMutation.mutate()}
+              disabled={saveSheetMutation.isPending || !newSheetTitle || !newSheetStartDate || !newSheetEndDate}
+            >
+              <Text style={styles.submitButtonText}>
+                {saveSheetMutation.isPending ? 'Creating...' : 'Create Sheet'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ⚙️ Master Settings Modal */}
+      <Modal
+        visible={isMasterSettingsVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsMasterSettingsVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.bottomSheet}>
+            <View style={styles.bottomSheetHeader}>
+              <Text style={styles.bottomSheetTitle}>Manage Master Settings</Text>
+              <Pressable style={styles.closeSheetBtn} onPress={() => setIsMasterSettingsVisible(false)}>
+                <X color={colors.dark.textSecondary} size={20} />
+              </Pressable>
+            </View>
+
+            <ScrollView style={{ marginBottom: 20 }}>
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>Tea Charges per day (₹)</Text>
+                <View style={styles.masterInputContainer}>
+                  <TextInput
+                    style={styles.masterTextInput}
+                    value={editingMaster.TeaExpense}
+                    onChangeText={(val) => setEditingMaster({ ...editingMaster, TeaExpense: val })}
+                    placeholder="e.g. 20"
+                    placeholderTextColor={colors.dark.textMuted}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>Bus Charges per day (₹)</Text>
+                <View style={styles.masterInputContainer}>
+                  <TextInput
+                    style={styles.masterTextInput}
+                    value={editingMaster.BusExpense}
+                    onChangeText={(val) => setEditingMaster({ ...editingMaster, BusExpense: val })}
+                    placeholder="e.g. 50"
+                    placeholderTextColor={colors.dark.textMuted}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+            </ScrollView>
+
+            <Pressable
+              style={[
+                styles.submitButtonLifting,
+                saveMasterSettingsMutation.isPending && styles.submitButtonDisabled
+              ]}
+              onPress={() => saveMasterSettingsMutation.mutate()}
+              disabled={saveMasterSettingsMutation.isPending}
+            >
+              <Text style={styles.submitButtonText}>
+                {saveMasterSettingsMutation.isPending ? 'Saving...' : 'Save Settings'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 🧱 Lifting Rates Modal */}
+      <Modal
+        visible={isLiftingRatesVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsLiftingRatesVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.bottomSheet}>
+            <View style={styles.bottomSheetHeader}>
+              <Text style={styles.bottomSheetTitle}>Manage Lifting Rates (₹)</Text>
+              <Pressable style={styles.closeSheetBtn} onPress={() => setIsLiftingRatesVisible(false)}>
+                <X color={colors.dark.textSecondary} size={20} />
+              </Pressable>
+            </View>
+
+            {/* Material Tabs Selector */}
+            <View style={styles.materialTabsContainer}>
+              {(['M.Sand', 'Jally', 'Sengal'] as const).map((mat) => (
+                <Pressable
+                  key={mat}
+                  style={[
+                    styles.materialTabButton,
+                    selectedLiftingMaterial === mat && styles.materialTabButtonActive
+                  ]}
+                  onPress={() => setSelectedLiftingMaterial(mat)}
+                >
+                  <Text
+                    style={[
+                      styles.materialTabButtonText,
+                      selectedLiftingMaterial === mat && styles.materialTabButtonTextActive
+                    ]}
+                  >
+                    {mat}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <ScrollView style={{ marginBottom: 20 }}>
+              {/* Rows for each floor for the selected material */}
+              {['G.Floor', '1st floor', '2nd floor', '3rd floor'].map((floor) => {
+                const key = `${selectedLiftingMaterial}_${floor}`;
+                const val = editingLiftingRates[key] || '0';
+                return (
+                  <View key={floor} style={styles.liftingRateRow}>
+                    <Text style={styles.liftingFloorLabel}>{floor}</Text>
+                    <View style={styles.liftingInputWrapper}>
+                      <Text style={styles.currencyPrefix}>₹</Text>
+                      <TextInput
+                        style={styles.liftingTextInput}
+                        value={val}
+                        onChangeText={(text) => {
+                          setEditingLiftingRates({
+                            ...editingLiftingRates,
+                            [key]: text
+                          });
+                        }}
+                        keyboardType="numeric"
+                        placeholder="0"
+                        placeholderTextColor={colors.dark.textMuted}
+                      />
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+
+            <Pressable
+              style={[
+                styles.submitButtonLifting,
+                saveLiftingRatesMutation.isPending && styles.submitButtonDisabled
+              ]}
+              onPress={() => saveLiftingRatesMutation.mutate()}
+              disabled={saveLiftingRatesMutation.isPending}
+            >
+              <Text style={styles.submitButtonText}>
+                {saveLiftingRatesMutation.isPending ? 'Saving...' : 'Save Rates'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -1128,6 +1637,97 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.dark.bgPrimary,
+  },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  headerActionButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: colors.dark.bgInput,
+    borderWidth: 1,
+    borderColor: colors.dark.border,
+  },
+  liftingRateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.dark.border + '33',
+  },
+  liftingFloorLabel: {
+    color: colors.dark.textPrimary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  liftingInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.dark.bgInput,
+    borderWidth: 1,
+    borderColor: colors.dark.border,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    width: 140,
+    height: 40,
+  },
+  currencyPrefix: {
+    color: colors.dark.textSecondary,
+    fontSize: 14,
+    marginRight: 4,
+    fontWeight: '600',
+  },
+  liftingTextInput: {
+    flex: 1,
+    color: colors.dark.textPrimary,
+    fontSize: 14,
+    fontWeight: '600',
+    padding: 0,
+  },
+  materialTabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.dark.bgInput,
+    borderRadius: 10,
+    padding: 4,
+    marginBottom: 16,
+  },
+  materialTabButton: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  materialTabButtonActive: {
+    backgroundColor: colors.dark.accent,
+  },
+  materialTabButtonText: {
+    color: colors.dark.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  materialTabButtonTextActive: {
+    color: '#0F0F1A',
+    fontWeight: '700',
+  },
+  masterInputContainer: {
+    backgroundColor: colors.dark.bgInput,
+    borderWidth: 1,
+    borderColor: colors.dark.border,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    height: 46,
+    width: '100%',
+    maxWidth: 160,
+    justifyContent: 'center',
+  },
+  masterTextInput: {
+    color: colors.dark.textPrimary,
+    fontSize: 15,
+    fontWeight: '600',
+    padding: 0,
   },
   headerBanner: {
     backgroundColor: colors.dark.bgSecondary,
@@ -1218,6 +1818,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 46,
+    position: 'relative',
   },
   textInputStyle: {
     flex: 1,
