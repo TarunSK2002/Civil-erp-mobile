@@ -10,7 +10,7 @@ import { ChevronRight, FileText, RefreshCw, Calendar, IndianRupee } from 'lucide
 
 interface WeeklyPay {
   id: number;
-  SheetTitle: string;
+  Title: string;
   WeekStartDate: string;
   WeekEndDate: string;
   TotalAmount?: number;
@@ -93,7 +93,7 @@ export default function WeeklyPayListScreen() {
               <View style={styles.cardTop}>
                 <View style={styles.cardTitleRow}>
                   <FileText color={colors.dark.accent} size={18} />
-                  <Text style={styles.cardTitle}>{item.SheetTitle}</Text>
+                  <Text style={styles.cardTitle}>{item.Title}</Text>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: statusColor(item.Status) + '22', borderColor: statusColor(item.Status) + '66' }]}>
                   <Text style={[styles.statusText, { color: statusColor(item.Status) }]}>{item.Status || 'Draft'}</Text>

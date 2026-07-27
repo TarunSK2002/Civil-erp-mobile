@@ -97,8 +97,13 @@ export default function WeeklyPayDetailScreen() {
     );
   }
 
-  const pendingTotal = detail?.payees.reduce((sum, p) => sum + p.pendingAmount, 0) ?? 0;
-  const paidTotal = detail?.payees.reduce((sum, p) => sum + p.paidAmount, 0) ?? 0;
+  const title = detail?.Title || detail?.SheetTitle || sheet?.Title || sheet?.SheetTitle || 'Weekly Pay Sheet';
+  const startDate = detail?.WeekStartDate || sheet?.WeekStartDate;
+  const endDate = detail?.WeekEndDate || sheet?.WeekEndDate;
+  const totalAmt = detail?.TotalAmount ?? sheet?.TotalAmount ?? 0;
+  const payeesList = detail?.payees || detail?.payeeBreakdown || [];
+  const pendingTotal = payeesList.reduce((sum: number, p: any) => sum + (p.pendingAmount || 0), 0);
+  const paidTotal = payeesList.reduce((sum: number, p: any) => sum + (p.paidAmount || 0), 0);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -106,22 +111,22 @@ export default function WeeklyPayDetailScreen() {
       <View style={styles.summaryCard}>
         <View style={styles.summaryHeader}>
           <FileText color={colors.dark.accent} size={20} />
-          <Text style={styles.summaryTitle}>{detail?.SheetTitle ?? sheet.SheetTitle}</Text>
+          <Text style={styles.summaryTitle}>{title}</Text>
         </View>
-        {detail?.SiteName && (
-          <Text style={styles.siteText}>{detail.SiteName}</Text>
+        {(detail?.SiteName || sheet?.SiteName) && (
+          <Text style={styles.siteText}>{detail?.SiteName || sheet?.SiteName}</Text>
         )}
         <View style={styles.dateRow}>
           <Calendar color={colors.dark.textMuted} size={13} />
           <Text style={styles.dateText}>
-            {formatDate(detail?.WeekStartDate ?? sheet.WeekStartDate)} – {formatDate(detail?.WeekEndDate ?? sheet.WeekEndDate)}
+            {formatDate(startDate)} – {formatDate(endDate)}
           </Text>
         </View>
 
         <View style={styles.amountGrid}>
           <View style={styles.amountItem}>
             <Text style={styles.amountLabel}>Total</Text>
-            <Text style={styles.amountValue}>₹{(detail?.TotalAmount ?? 0).toLocaleString('en-IN')}</Text>
+            <Text style={styles.amountValue}>₹{totalAmt.toLocaleString('en-IN')}</Text>
           </View>
           <View style={styles.amountDivider} />
           <View style={styles.amountItem}>
@@ -138,9 +143,9 @@ export default function WeeklyPayDetailScreen() {
 
       {/* Payee List */}
       <Text style={styles.sectionTitle}>Payee Breakdown</Text>
-      {detail?.payees.map((payee) => {
+      {payeesList.map((payee: any) => {
         const isExpanded = expandedPayeeId === payee.payeeId;
-        const isPaid = payee.pendingAmount === 0;
+        const isPaid = (payee.pendingAmount || 0) === 0;
 
         return (
           <View key={payee.payeeId} style={styles.payeeCard}>
@@ -210,7 +215,7 @@ export default function WeeklyPayDetailScreen() {
         );
       })}
 
-      {(!detail?.payees || detail.payees.length === 0) && (
+      {(!payeesList || payeesList.length === 0) && (
         <View style={styles.emptyPayees}>
           <Text style={styles.emptyText}>No payee data available for this sheet</Text>
         </View>
