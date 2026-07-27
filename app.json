@@ -2,6 +2,7 @@
   "expo": {
     "name": "Jeeva ERP",
     "slug": "jeeva-mobile",
+    "owner": "tarun_sk",
     "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -23,6 +24,11 @@
     },
     "plugins": [
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "3e1eb6d5-3b2b-4d06-9f1a-4f7f4610d865"
+      }
+    }
   }
 }
