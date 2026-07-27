@@ -38,24 +38,28 @@ interface PaySheetDetail {
 
 export default function WeeklyPayDetailScreen() {
   const route = useRoute<any>();
-  const { sheet } = route.params;
+  const sheet = route.params?.sheet || {};
   const queryClient = useQueryClient();
   const [expandedPayeeId, setExpandedPayeeId] = useState<number | null>(null);
 
-  const { data: detail, isLoading, refetch, isFetching } = useQuery<PaySheetDetail>({
-    queryKey: ['weekly-pay-detail', sheet.id],
+  const sheetId = sheet.id || route.params?.id;
+
+  const { data: detail, isLoading, isError, refetch, isFetching } = useQuery<PaySheetDetail>({
+    queryKey: ['weekly-pay-detail', sheetId],
     queryFn: async () => {
-      const response = await api.get(`/attendance-sheets/${sheet.id}`);
+      if (!sheetId) return null;
+      const response = await api.get(`/attendance-sheets/${sheetId}`);
       return response.data;
     },
+    enabled: !!sheetId,
   });
 
   const payMutation = useMutation({
     mutationFn: async (payeeId: number) => {
-      return api.post(`/attendance-sheets/${sheet.id}/pay`, { payeeId });
+      return api.post(`/attendance-sheets/${sheetId}/pay`, { payeeId });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['weekly-pay-detail', sheet.id] });
+      queryClient.invalidateQueries({ queryKey: ['weekly-pay-detail', sheetId] });
       queryClient.invalidateQueries({ queryKey: ['weekly-pay-sheets'] });
     },
     onError: (err: any) => {
@@ -74,7 +78,8 @@ export default function WeeklyPayDetailScreen() {
     );
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '';
     try {
       return new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
     } catch {
