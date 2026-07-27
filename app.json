@@ -1,22 +1,22 @@
 {
   "expo": {
-    "name": "jeeva-mobile",
+    "name": "Jeeva ERP",
     "slug": "jeeva-mobile",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jeevaconstruction.erp"
     },
     "android": {
+      "package": "com.jeevaconstruction.erp",
+      "versionCode": 2,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
+        "backgroundColor": "#0F0F1A",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
