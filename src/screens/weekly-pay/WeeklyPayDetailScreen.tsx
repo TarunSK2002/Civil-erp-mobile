@@ -24,14 +24,16 @@ interface PayeeBreakdown {
 
 interface PaySheetDetail {
   id: number;
-  SheetTitle: string;
+  SheetTitle?: string;
+  Title?: string;
   WeekStartDate: string;
   WeekEndDate: string;
   TotalAmount: number;
   PaidAmount: number;
   Status: string;
   SiteName?: string;
-  payees: PayeeBreakdown[];
+  payees?: PayeeBreakdown[];
+  payeeBreakdown?: PayeeBreakdown[];
 }
 
 export default function WeeklyPayDetailScreen() {
@@ -189,7 +191,7 @@ export default function WeeklyPayDetailScreen() {
                 </View>
 
                 {/* Day-by-day breakdown */}
-                {payee.details?.map((d, idx) => (
+                {payee.details?.map((d: any, idx: number) => (
                   <View key={idx} style={styles.dayRow}>
                     <Clock color={colors.dark.textMuted} size={12} />
                     <Text style={styles.dayDate}>{formatDate(d.date)}</Text>
