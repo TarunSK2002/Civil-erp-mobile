@@ -131,21 +131,28 @@ export default function DashboardScreen() {
       {/* Quick Action Operations Dashboard Sections */}
       <Text style={styles.sectionTitle}>Quick Operations</Text>
       <View style={styles.actionGrid}>
-        <Pressable style={styles.actionItem} onPress={() => navigation.navigate('Labour')}>
+        <Pressable style={styles.actionItem} onPress={() => navigation.navigate('Labour', { screen: 'AttendanceSheet' })}>
           <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(244, 63, 94, 0.12)' }]}>
             <ClipboardList color="#f43f5e" size={24} />
           </View>
           <Text style={styles.actionLabel}>Attendance</Text>
         </Pressable>
 
-        <Pressable style={styles.actionItem} onPress={() => navigation.navigate('Labour')}>
+        <Pressable style={styles.actionItem} onPress={() => navigation.navigate('Labour', { screen: 'LabourList' })}>
+          <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(59, 130, 246, 0.12)' }]}>
+            <HardHat color="#3b82f6" size={24} />
+          </View>
+          <Text style={styles.actionLabel}>Labour List</Text>
+        </Pressable>
+
+        <Pressable style={styles.actionItem} onPress={() => navigation.navigate('Labour', { screen: 'WeeklyPayList' })}>
           <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
             <FileSpreadsheet color="#8b5cf6" size={24} />
           </View>
           <Text style={styles.actionLabel}>Pay Sheets</Text>
         </Pressable>
 
-        <Pressable style={styles.actionItem} onPress={() => navigation.navigate('Finance')}>
+        <Pressable style={styles.actionItem} onPress={() => navigation.navigate('Finance', { screen: 'PaymentList' })}>
           <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
             <CreditCard color="#10b981" size={24} />
           </View>

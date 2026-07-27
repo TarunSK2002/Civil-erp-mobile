@@ -7,6 +7,9 @@ import { typography } from '../../theme/typography';
 import { Calendar, Plus, Trash2, HardHat, ChevronDown, Check, Briefcase, PlusCircle, Clock, Ruler, X, TrendingUp, Coffee, Package, Settings } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
+import { useNavigation } from '@react-navigation/native';
+import { FileSpreadsheet } from 'lucide-react-native';
+
 interface ShiftType {
   id: number;
   ShiftType: string;
@@ -28,6 +31,7 @@ interface AttendanceSheet {
 }
 
 export default function AttendancePaySheetScreen() {
+  const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
   const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
   const [entryDate, setEntryDate] = useState(new Date().toISOString().split('T')[0]);
@@ -556,6 +560,12 @@ export default function AttendancePaySheetScreen() {
           </View>
         </View>
         <View style={styles.headerRightActions}>
+          <Pressable style={styles.headerActionButton} onPress={() => navigation.navigate('LabourList')}>
+            <HardHat color={colors.dark.accent} size={18} />
+          </Pressable>
+          <Pressable style={styles.headerActionButton} onPress={() => navigation.navigate('WeeklyPayList')}>
+            <FileSpreadsheet color={colors.dark.accent} size={18} />
+          </Pressable>
           <Pressable style={styles.headerActionButton} onPress={() => setIsLiftingRatesVisible(true)}>
             <Ruler color={colors.dark.accent} size={18} />
           </Pressable>

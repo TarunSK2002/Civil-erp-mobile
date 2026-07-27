@@ -13,6 +13,9 @@ import SiteListScreen from '../screens/sites/SiteListScreen';
 import SiteDetailScreen from '../screens/sites/SiteDetailScreen';
 import ClientListScreen from '../screens/clients/ClientListScreen';
 import AttendancePaySheetScreen from '../screens/attendance/AttendancePaySheetScreen';
+import LabourListScreen from '../screens/labour/LabourListScreen';
+import WeeklyPayListScreen from '../screens/weekly-pay/WeeklyPayListScreen';
+import WeeklyPayDetailScreen from '../screens/weekly-pay/WeeklyPayDetailScreen';
 import PaymentListScreen from '../screens/payments/PaymentListScreen';
 
 // ──── Sites Stack ────────────────────────────────────────────────────────────
@@ -24,6 +27,43 @@ function SitesStackNavigator() {
       <SitesStack.Screen name="SiteList" component={SiteListScreen} />
       <SitesStack.Screen name="SiteDetail" component={SiteDetailScreen} />
     </SitesStack.Navigator>
+  );
+}
+
+// ──── Labour Stack ───────────────────────────────────────────────────────────
+
+const LabourStack = createNativeStackNavigator();
+function LabourStackNavigator() {
+  return (
+    <LabourStack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.dark.bgSecondary },
+        headerTintColor: colors.dark.textPrimary,
+        headerTitleStyle: { fontWeight: '600' },
+        headerShadowVisible: false,
+      }}
+    >
+      <LabourStack.Screen
+        name="AttendanceSheet"
+        component={AttendancePaySheetScreen}
+        options={{ headerShown: false }}
+      />
+      <LabourStack.Screen
+        name="LabourList"
+        component={LabourListScreen}
+        options={{ title: 'Labour Master' }}
+      />
+      <LabourStack.Screen
+        name="WeeklyPayList"
+        component={WeeklyPayListScreen}
+        options={{ title: 'Weekly Pay Sheets' }}
+      />
+      <LabourStack.Screen
+        name="WeeklyPayDetail"
+        component={WeeklyPayDetailScreen}
+        options={{ title: 'Weekly Pay Details' }}
+      />
+    </LabourStack.Navigator>
   );
 }
 
@@ -86,8 +126,7 @@ function TabNavigator() {
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Sites" component={SitesStackNavigator} options={{ headerShown: false }} />
-      {/* Labour tab: directly shows AttendancePaySheetScreen (same as before) */}
-      <Tab.Screen name="Labour" component={AttendancePaySheetScreen} options={{ headerShown: false }} />
+      <Tab.Screen name="Labour" component={LabourStackNavigator} options={{ headerShown: false }} />
       <Tab.Screen name="Clients" component={ClientListScreen} />
       <Tab.Screen name="Finance" component={FinanceStackNavigator} options={{ headerShown: false }} />
     </Tab.Navigator>
