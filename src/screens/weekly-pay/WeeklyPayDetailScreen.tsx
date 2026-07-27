@@ -43,14 +43,14 @@ export default function WeeklyPayDetailScreen() {
   const { data: detail, isLoading, refetch, isFetching } = useQuery<PaySheetDetail>({
     queryKey: ['weekly-pay-detail', sheet.id],
     queryFn: async () => {
-      const response = await api.get(`/attendance/sheets/${sheet.id}/pay-detail`);
+      const response = await api.get(`/attendance-sheets/${sheet.id}`);
       return response.data;
     },
   });
 
   const payMutation = useMutation({
     mutationFn: async (payeeId: number) => {
-      return api.post(`/attendance/sheets/${sheet.id}/pay`, { payeeId });
+      return api.post(`/attendance-sheets/${sheet.id}/pay`, { payeeId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['weekly-pay-detail', sheet.id] });

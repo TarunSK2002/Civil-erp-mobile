@@ -24,7 +24,7 @@ export default function WeeklyPayListScreen() {
   const { data: sheets, isLoading, isFetching, refetch } = useQuery<WeeklyPay[]>({
     queryKey: ['weekly-pay-sheets'],
     queryFn: async () => {
-      const response = await api.get('/attendance/sheets');
+      const response = await api.get('/attendance-sheets');
       return response.data;
     },
   });
