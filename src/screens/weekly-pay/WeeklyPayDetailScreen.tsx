@@ -36,6 +36,147 @@ interface PaySheetDetail {
   payeeBreakdown?: PayeeBreakdown[];
 }
 
+function parsePayeeBreakdown(detail: any): PayeeBreakdown[] {
+  if (!detail) return [];
+
+  if (Array.isArray(detail.payeeBreakdown) && detail.payeeBreakdown.length > 0) {
+    return detail.payeeBreakdown;
+  }
+  if (Array.isArray(detail.payees) && detail.payees.length > 0 && detail.payees[0].payeeName) {
+    return detail.payees;
+  }
+
+  const rawPayees = Array.isArray(detail.payees) ? detail.payees : [];
+  const grid = detail.grid || {};
+  const miscData = detail.miscData || {};
+  const liftingRecords = Array.isArray(detail.liftingRecords) ? detail.liftingRecords : [];
+
+  const map = new Map<number, PayeeBreakdown>();
+
+  rawPayees.forEach((p: any) => {
+    const id = p.id || p.payeeId;
+    if (!id) return;
+    map.set(id, {
+      payeeId: id,
+      payeeName: p.Name || p.payeeName || `Payee #${id}`,
+      personType: p.Type || p.personType || 'Labour',
+      days: 0,
+      totalAmount: 0,
+      paidAmount: 0,
+      pendingAmount: 0,
+      details: [],
+    });
+  });
+
+  Object.keys(grid).forEach((key) => {
+    const [pIdStr] = key.split('_');
+    const pId = parseInt(pIdStr, 10);
+    if (!pId || isNaN(pId)) return;
+
+    if (!map.has(pId)) {
+      map.set(pId, {
+        payeeId: pId,
+        payeeName: `Payee #${pId}`,
+        personType: 'Labour',
+        days: 0,
+        totalAmount: 0,
+        paidAmount: 0,
+        pendingAmount: 0,
+        details: [],
+      });
+    }
+
+    const item = map.get(pId)!;
+    const gridVal = grid[key];
+
+    if (gridVal) {
+      if (gridVal.records && Array.isArray(gridVal.records)) {
+        gridVal.records.forEach((rec: any) => {
+          const amt = parseFloat(rec.calculatedAmount || 0);
+          item.totalAmount += amt;
+          item.pendingAmount += amt;
+          item.days += rec.labourCount || 1;
+          item.details!.push({
+            date: rec.date || '',
+            hours: rec.hours || undefined,
+            sqft: rec.sqFt || undefined,
+            amount: amt,
+          });
+        });
+      } else {
+        const amt = parseFloat(gridVal.amount || 0);
+        item.totalAmount += amt;
+        if (gridVal.status === 'Paid') {
+          item.paidAmount += amt;
+        } else {
+          item.pendingAmount += amt;
+        }
+      }
+    }
+  });
+
+  Object.keys(miscData).forEach((pIdStr) => {
+    const pId = parseInt(pIdStr, 10);
+    if (!pId || isNaN(pId)) return;
+
+    if (!map.has(pId)) {
+      map.set(pId, {
+        payeeId: pId,
+        payeeName: `Payee #${pId}`,
+        personType: 'Labour',
+        days: 0,
+        totalAmount: 0,
+        paidAmount: 0,
+        pendingAmount: 0,
+        details: [],
+      });
+    }
+
+    const item = map.get(pId)!;
+    const miscInfo = miscData[pIdStr];
+    if (miscInfo && miscInfo.items) {
+      miscInfo.items.forEach((m: any) => {
+        const amt = parseFloat(m.amount || 0);
+        item.totalAmount += amt;
+        item.pendingAmount += amt;
+        item.details!.push({
+          date: 'Misc',
+          amount: amt,
+        });
+      });
+    }
+  });
+
+  liftingRecords.forEach((l: any) => {
+    const pId = l.PayeeId;
+    if (!pId) return;
+
+    if (!map.has(pId)) {
+      map.set(pId, {
+        payeeId: pId,
+        payeeName: `Payee #${pId}`,
+        personType: 'Labour',
+        days: 0,
+        totalAmount: 0,
+        paidAmount: 0,
+        pendingAmount: 0,
+        details: [],
+      });
+    }
+
+    const item = map.get(pId)!;
+    const amt = parseFloat(l.Amount || 0);
+    item.totalAmount += amt;
+    item.pendingAmount += amt;
+    item.details!.push({
+      date: l.LiftingDate || 'Lifting',
+      amount: amt,
+    });
+  });
+
+  return Array.from(map.values());
+}
+
 export default function WeeklyPayDetailScreen() {
   const route = useRoute<any>();
   const sheet = route.params?.sheet || {};
@@ -70,7 +211,7 @@ export default function WeeklyPayDetailScreen() {
   const handlePay = (payee: PayeeBreakdown) => {
     Alert.alert(
       'Confirm Payment',
-      `Pay ₹${payee.pendingAmount.toLocaleString('en-IN')} to ${payee.payeeName}?`,
+      `Pay ₹${(payee.pendingAmount || 0).toLocaleString('en-IN')} to ${payee.payeeName}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Confirm', onPress: () => payMutation.mutate(payee.payeeId) },
@@ -107,8 +248,9 @@ export default function WeeklyPayDetailScreen() {
   const title = detail?.Title || detail?.SheetTitle || sheet?.Title || sheet?.SheetTitle || 'Weekly Pay Sheet';
   const startDate = detail?.WeekStartDate || sheet?.WeekStartDate;
   const endDate = detail?.WeekEndDate || sheet?.WeekEndDate;
-  const totalAmt = detail?.TotalAmount ?? sheet?.TotalAmount ?? 0;
-  const payeesList = detail?.payees || detail?.payeeBreakdown || [];
+
+  const payeesList = parsePayeeBreakdown(detail);
+  const totalAmt = payeesList.reduce((sum, p) => sum + (p.totalAmount || 0), detail?.TotalAmount || sheet?.TotalAmount || 0);
   const pendingTotal = payeesList.reduce((sum: number, p: any) => sum + (p.pendingAmount || 0), 0);
   const paidTotal = payeesList.reduce((sum: number, p: any) => sum + (p.paidAmount || 0), 0);
 
@@ -150,7 +292,7 @@ export default function WeeklyPayDetailScreen() {
 
       {/* Payee List */}
       <Text style={styles.sectionTitle}>Payee Breakdown</Text>
-      {payeesList.map((payee: any) => {
+      {payeesList.map((payee: PayeeBreakdown) => {
         const isExpanded = expandedPayeeId === payee.payeeId;
         const isPaid = (payee.pendingAmount || 0) === 0;
 
@@ -171,7 +313,7 @@ export default function WeeklyPayDetailScreen() {
               </View>
               <View style={styles.payeeRight}>
                 <Text style={[styles.payeeAmount, isPaid && { color: colors.dark.success }]}>
-                  ₹{payee.totalAmount.toLocaleString('en-IN')}
+                  ₹{(payee.totalAmount || 0).toLocaleString('en-IN')}
                 </Text>
                 {isPaid ? (
                   <CheckCircle2 color={colors.dark.success} size={16} />
@@ -187,11 +329,11 @@ export default function WeeklyPayDetailScreen() {
                 <View style={styles.payStatusRow}>
                   <View style={styles.payStatusItem}>
                     <Text style={styles.payStatusLabel}>Paid</Text>
-                    <Text style={[styles.payStatusValue, { color: colors.dark.success }]}>₹{payee.paidAmount.toLocaleString('en-IN')}</Text>
+                    <Text style={[styles.payStatusValue, { color: colors.dark.success }]}>₹{(payee.paidAmount || 0).toLocaleString('en-IN')}</Text>
                   </View>
                   <View style={styles.payStatusItem}>
                     <Text style={styles.payStatusLabel}>Pending</Text>
-                    <Text style={[styles.payStatusValue, { color: colors.dark.error }]}>₹{payee.pendingAmount.toLocaleString('en-IN')}</Text>
+                    <Text style={[styles.payStatusValue, { color: colors.dark.error }]}>₹{(payee.pendingAmount || 0).toLocaleString('en-IN')}</Text>
                   </View>
                 </View>
 
@@ -202,7 +344,7 @@ export default function WeeklyPayDetailScreen() {
                     <Text style={styles.dayDate}>{formatDate(d.date)}</Text>
                     {d.hours !== undefined && <Text style={styles.dayDetail}>{d.hours}h</Text>}
                     {d.sqft !== undefined && <Text style={styles.dayDetail}>{d.sqft} sqft</Text>}
-                    <Text style={styles.dayAmount}>₹{d.amount}</Text>
+                    <Text style={styles.dayAmount}>₹{d.amount || 0}</Text>
                   </View>
                 ))}
 
@@ -213,7 +355,7 @@ export default function WeeklyPayDetailScreen() {
                     disabled={payMutation.isPending}
                   >
                     <CreditCard color="#0F0F1A" size={16} />
-                    <Text style={styles.payBtnText}>Pay ₹{payee.pendingAmount.toLocaleString('en-IN')}</Text>
+                    <Text style={styles.payBtnText}>Pay ₹{(payee.pendingAmount || 0).toLocaleString('en-IN')}</Text>
                   </Pressable>
                 )}
               </View>
