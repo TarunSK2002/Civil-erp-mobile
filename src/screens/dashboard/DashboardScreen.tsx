@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   errorContainer: {
     flex: 1,
     backgroundColor: colors.dark.bgPrimary,
-    justify.content: 'center',
+    justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
