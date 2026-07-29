@@ -21,6 +21,7 @@ interface PersonType {
   PersonTypeName?: string;
   DailyRate?: number;
   DefaultWage?: number;
+  RateUnit?: string;
   Description?: string;
 }
 
@@ -34,6 +35,7 @@ export default function PersonTypeScreen() {
   const [editingType, setEditingType] = useState<PersonType | null>(null);
   const [typeName, setTypeName] = useState('');
   const [defaultWage, setDefaultWage] = useState('');
+  const [rateUnit, setRateUnit] = useState<'Day' | 'Hour' | 'SqFt'>('Day');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -57,6 +59,7 @@ export default function PersonTypeScreen() {
     setEditingType(null);
     setTypeName('');
     setDefaultWage('');
+    setRateUnit('Day');
     setDescription('');
     setModalVisible(true);
   };
@@ -66,6 +69,7 @@ export default function PersonTypeScreen() {
     setTypeName(item.Name || item.PersonTypeName || '');
     const wage = item.DailyRate !== undefined ? item.DailyRate : item.DefaultWage || 0;
     setDefaultWage(wage ? wage.toString() : '');
+    setRateUnit((item.RateUnit as any) || 'Day');
     setDescription(item.Description || '');
     setModalVisible(true);
   };
@@ -80,6 +84,7 @@ export default function PersonTypeScreen() {
       const payload = {
         Name: typeName.trim(),
         DailyRate: parseFloat(defaultWage) || 0,
+        RateUnit: rateUnit,
         Description: description.trim(),
       };
 
@@ -136,6 +141,7 @@ export default function PersonTypeScreen() {
           renderItem={({ item }) => {
             const name = item.Name || item.PersonTypeName || 'Person Type';
             const wage = item.DailyRate !== undefined ? item.DailyRate : item.DefaultWage || 0;
+            const unit = item.RateUnit || 'Day';
 
             return (
               <View style={styles.card}>
@@ -150,7 +156,7 @@ export default function PersonTypeScreen() {
                     ) : null}
                   </View>
                   <View style={{ alignItems: 'flex-end', marginRight: 12 }}>
-                    <Text style={styles.wageLabel}>Default Wage</Text>
+                    <Text style={styles.wageLabel}>Wage / {unit}</Text>
                     <Text style={styles.wageValue}>₹{Number(wage).toLocaleString('en-IN')}</Text>
                   </View>
                   <TouchableOpacity onPress={() => openEditModal(item)} style={{ padding: 4, marginRight: 6 }}>
@@ -187,17 +193,32 @@ export default function PersonTypeScreen() {
               style={styles.input}
               value={typeName}
               onChangeText={setTypeName}
-              placeholder="e.g. Mason, Helper, Painter"
+              placeholder="e.g. Mason, Helper, Painter, Driller"
               placeholderTextColor={colors.dark.textMuted}
             />
 
-            <Text style={styles.label}>Default Daily Wage (₹)</Text>
+            <Text style={styles.label}>Wage Type (Rate Unit)</Text>
+            <View style={styles.unitContainer}>
+              {(['Day', 'Hour', 'SqFt'] as const).map((unit) => (
+                <TouchableOpacity
+                  key={unit}
+                  style={[styles.unitChip, rateUnit === unit && styles.unitChipActive]}
+                  onPress={() => setRateUnit(unit)}
+                >
+                  <Text style={[styles.unitChipText, rateUnit === unit && styles.unitChipTextActive]}>
+                    Per {unit}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.label}>Default Rate / Wage (₹)</Text>
             <TextInput
               style={styles.input}
               value={defaultWage}
               onChangeText={setDefaultWage}
               keyboardType="numeric"
-              placeholder="e.g. 850"
+              placeholder="e.g. 800"
               placeholderTextColor={colors.dark.textMuted}
             />
 
@@ -308,6 +329,32 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.dark.textSecondary,
     marginBottom: 6,
+  },
+  unitContainer: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  unitChip: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: colors.dark.bgInput,
+    marginRight: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.dark.border,
+  },
+  unitChipActive: {
+    backgroundColor: colors.dark.accent,
+    borderColor: colors.dark.accent,
+  },
+  unitChipText: {
+    fontSize: 12,
+    color: colors.dark.textSecondary,
+  },
+  unitChipTextActive: {
+    color: '#000',
+    fontWeight: 'bold',
   },
   input: {
     backgroundColor: colors.dark.bgInput,
