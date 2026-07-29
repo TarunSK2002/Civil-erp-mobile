@@ -12,7 +12,6 @@ import {
   CreditCard, 
   AlertCircle, 
   Calendar, 
-  ChevronRight,
   ClipboardList,
   HardHat,
   FileSpreadsheet,
@@ -81,34 +80,39 @@ export default function DashboardScreen() {
 
   const moduleCards = [
     {
-      title: 'Material Dealers',
-      subtitle: 'Supplier directory & contact details',
+      title: 'Dealers',
       icon: Store,
       screen: 'DealerList',
+      bgColor: 'rgba(255, 179, 0, 0.12)',
+      iconColor: '#FFB300',
     },
     {
-      title: 'Material Purchases',
-      subtitle: 'Site purchase entries & SqFt billing',
+      title: 'Purchases',
       icon: ShoppingBag,
       screen: 'PurchaseList',
+      bgColor: 'rgba(59, 130, 246, 0.12)',
+      iconColor: '#3b82f6',
     },
     {
-      title: 'Person Types (Wage Rates)',
-      subtitle: 'Mason, Helper, Painter wage settings',
+      title: 'Person Types',
       icon: UserCheck,
       screen: 'PersonType',
+      bgColor: 'rgba(16, 185, 129, 0.12)',
+      iconColor: '#10b981',
     },
     {
       title: 'Shift Master',
-      subtitle: 'Full day, half day wage multipliers',
       icon: Clock,
       screen: 'ShiftMaster',
+      bgColor: 'rgba(139, 92, 246, 0.12)',
+      iconColor: '#8b5cf6',
     },
     {
-      title: 'Petty Cash & Expenses',
-      subtitle: 'Track office & site cash expenses',
+      title: 'Petty Cash',
       icon: Wallet,
       screen: 'PettyCash',
+      bgColor: 'rgba(236, 72, 153, 0.12)',
+      iconColor: '#ec4899',
     },
   ];
 
@@ -165,57 +169,53 @@ export default function DashboardScreen() {
         />
       </ScrollView>
 
-      {/* Quick Action Operations Dashboard Sections */}
+      {/* Quick Operations — 1 Row 4 Column compact grid */}
       <Text style={styles.sectionTitle}>Quick Operations</Text>
-      <View style={styles.actionGrid}>
-        <Pressable style={styles.actionItem} onPress={() => navigation.navigate('Labour', { screen: 'AttendanceSheet' })}>
-          <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(244, 63, 94, 0.12)' }]}>
-            <ClipboardList color="#f43f5e" size={24} />
+      <View style={styles.gridRow}>
+        <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Labour', { screen: 'AttendanceSheet' })}>
+          <View style={[styles.gridIconBox, { backgroundColor: 'rgba(244, 63, 94, 0.12)' }]}>
+            <ClipboardList color="#f43f5e" size={20} />
           </View>
-          <Text style={styles.actionLabel}>Attendance</Text>
+          <Text style={styles.gridLabel} numberOfLines={1}>Attendance</Text>
         </Pressable>
 
-        <Pressable style={styles.actionItem} onPress={() => navigation.navigate('Labour', { screen: 'LabourList' })}>
-          <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(59, 130, 246, 0.12)' }]}>
-            <HardHat color="#3b82f6" size={24} />
+        <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Labour', { screen: 'LabourList' })}>
+          <View style={[styles.gridIconBox, { backgroundColor: 'rgba(59, 130, 246, 0.12)' }]}>
+            <HardHat color="#3b82f6" size={20} />
           </View>
-          <Text style={styles.actionLabel}>Labour List</Text>
+          <Text style={styles.gridLabel} numberOfLines={1}>Labour List</Text>
         </Pressable>
 
-        <Pressable style={styles.actionItem} onPress={() => navigation.navigate('Labour', { screen: 'WeeklyPayList' })}>
-          <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
-            <FileSpreadsheet color="#8b5cf6" size={24} />
+        <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Labour', { screen: 'WeeklyPayList' })}>
+          <View style={[styles.gridIconBox, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
+            <FileSpreadsheet color="#8b5cf6" size={20} />
           </View>
-          <Text style={styles.actionLabel}>Pay Sheets</Text>
+          <Text style={styles.gridLabel} numberOfLines={1}>Pay Sheets</Text>
         </Pressable>
 
-        <Pressable style={styles.actionItem} onPress={() => navigation.navigate('Finance', { screen: 'PaymentList' })}>
-          <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
-            <CreditCard color="#10b981" size={24} />
+        <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Finance', { screen: 'PaymentList' })}>
+          <View style={[styles.gridIconBox, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+            <CreditCard color="#10b981" size={20} />
           </View>
-          <Text style={styles.actionLabel}>Payments</Text>
+          <Text style={styles.gridLabel} numberOfLines={1}>Payments</Text>
         </Pressable>
       </View>
 
-      {/* Additional Modules Cards */}
+      {/* Secondary & Master Modules — Square Grid Cards */}
       <Text style={styles.sectionTitle}>Secondary & Master Modules</Text>
-      <View style={styles.moduleCardList}>
+      <View style={styles.gridRowWrap}>
         {moduleCards.map((item, idx) => {
           const IconComponent = item.icon;
           return (
             <Pressable
               key={idx}
-              style={styles.moduleCard}
+              style={styles.gridCardFour}
               onPress={() => navigation.navigate(item.screen)}
             >
-              <View style={styles.moduleIconBox}>
-                <IconComponent color={colors.dark.accent} size={22} />
+              <View style={[styles.gridIconBox, { backgroundColor: item.bgColor }]}>
+                <IconComponent color={item.iconColor} size={20} />
               </View>
-              <View style={{ flex: 1, marginLeft: 14 }}>
-                <Text style={styles.moduleTitle}>{item.title}</Text>
-                <Text style={styles.moduleSubtitle}>{item.subtitle}</Text>
-              </View>
-              <ChevronRight color={colors.dark.textMuted} size={20} />
+              <Text style={styles.gridLabel} numberOfLines={1}>{item.title}</Text>
             </Pressable>
           );
         })}
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.dark.bgPrimary,
   },
   contentContainer: {
-    padding: 20,
+    padding: 16,
     paddingBottom: 40,
   },
   loadingContainer: {
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   greeting: {
     color: colors.dark.textPrimary,
@@ -315,85 +315,75 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   statsScroll: {
-    marginHorizontal: -20,
-    marginBottom: 24,
+    marginHorizontal: -16,
+    marginBottom: 20,
   },
   statsScrollContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   sectionTitle: {
     color: colors.dark.textPrimary,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    marginBottom: 16,
-    marginTop: 8,
+    marginBottom: 12,
+    marginTop: 6,
   },
-  actionGrid: {
+  /* 4-column compact grid styles */
+  gridRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: 16,
   },
-  actionItem: {
-    width: '48%',
-    backgroundColor: colors.dark.bgSecondary,
-    borderWidth: 1,
-    borderColor: colors.dark.border,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  actionIconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  actionLabel: {
-    color: colors.dark.textPrimary,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  moduleCardList: {
-    marginBottom: 16,
-  },
-  moduleCard: {
+  gridRowWrap: {
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  gridCard: {
+    flex: 1,
+    marginHorizontal: 3,
     backgroundColor: colors.dark.bgSecondary,
-    padding: 16,
-    borderRadius: 14,
-    marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.dark.border,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  moduleIconBox: {
-    width: 44,
-    height: 44,
+  gridCardFour: {
+    width: '23%',
+    backgroundColor: colors.dark.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.dark.border,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  gridIconBox: {
+    width: 38,
+    height: 38,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,179,0,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 8,
   },
-  moduleTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  gridLabel: {
     color: colors.dark.textPrimary,
-  },
-  moduleSubtitle: {
-    fontSize: 12,
-    color: colors.dark.textSecondary,
-    marginTop: 2,
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   progressCard: {
     backgroundColor: colors.dark.bgSecondary,
     borderWidth: 1,
     borderColor: colors.dark.border,
     borderRadius: 12,
-    padding: 20,
+    padding: 16,
   },
   progressRow: {
     flexDirection: 'row',
