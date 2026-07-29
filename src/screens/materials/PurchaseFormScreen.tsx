@@ -15,45 +15,63 @@ import { colors } from '../../theme/colors';
 import api from '../../api/client';
 import { Check, ChevronDown, Search, X } from 'lucide-react-native';
 
+const UNITS = [
+  'nos', 'unit', 'kg', 'litr', 'running feet', 'ton', 'bill',
+  'cu ft', 'sq ft', 'cu m', 'sq m', 'meter', 'running meter', 'box',
+  'PVC door', 'PVC Window', 'UPVC door', 'UPVC window',
+  'Aluminium door', 'aluminium window', 'steel door', 'steel window',
+  'wpc door', 'teekwood door', 'flush door', 'mahakani door',
+  'wood Ventilator', 'upvc ventilator'
+];
+
 export default function PurchaseFormScreen({ navigation }: any) {
   const [sites, setSites] = useState<any[]>([]);
-  const [materials, setMaterials] = useState<any[]>([]);
+  const [materialTypes, setMaterialTypes] = useState<any[]>([]);
   const [loadingDropdowns, setLoadingDropdowns] = useState(true);
 
-  // Form State
+  // Form State matching Win App schema
   const [siteId, setSiteId] = useState<number | null>(null);
   const [materialId, setMaterialId] = useState<number | null>(null);
-  const [supplierName, setSupplierName] = useState('');
-  const [billNo, setBillNo] = useState('');
   const [quantity, setQuantity] = useState('');
-  const [unitRate, setUnitRate] = useState('');
-  const [totalAmount, setTotalAmount] = useState('');
-  const [paidAmount, setPaidAmount] = useState('0');
-  const [remarks, setRemarks] = useState('');
+  const [unit, setUnit] = useState('nos');
+  const [dealerName, setDealerName] = useState('');
+  const [ratePerUnit, setRatePerUnit] = useState('');
+  const [amount, setAmount] = useState('');
+  const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // SqFt specific fields
+  const [length, setLength] = useState('');
+  const [breadth, setBreadth] = useState('');
+  const [sqFt, setSqFt] = useState('');
+  const [wastagePercent, setWastagePercent] = useState('0');
+
+  // Optional Section / Project fields
+  const [sections, setSections] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [sectionId, setSectionId] = useState<number | null>(null);
+  const [projectId, setProjectId] = useState<number | null>(null);
+
   const [submitting, setSubmitting] = useState(false);
 
-  // Dropdown Modals State
+  // Modal State for Dropdowns
   const [siteModalOpen, setSiteModalOpen] = useState(false);
   const [siteSearch, setSiteSearch] = useState('');
-  const [dealerModalOpen, setDealerModalOpen] = useState(false);
-  const [dealerSearch, setDealerSearch] = useState('');
+  const [materialModalOpen, setMaterialModalOpen] = useState(false);
+  const [materialSearch, setMaterialSearch] = useState('');
+  const [unitModalOpen, setUnitModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadDropdowns() {
       try {
-        const [sitesRes, materialsRes] = await Promise.all([
+        const [sitesRes, typesRes] = await Promise.all([
           api.get('/sites'),
-          api.get('/materials'),
+          api.get('/material-types'),
         ]);
         setSites(sitesRes.data || []);
-        setMaterials(materialsRes.data || []);
+        setMaterialTypes(typesRes.data || []);
         if (sitesRes.data?.length > 0) setSiteId(sitesRes.data[0].Id || sitesRes.data[0].id);
-        if (materialsRes.data?.length > 0) {
-          setMaterialId(materialsRes.data[0].id);
-          setSupplierName(materialsRes.data[0].Name || '');
-        }
       } catch (err: any) {
-        Alert.alert('Error', 'Failed to load sites and material dealers');
+        Alert.alert('Error', 'Failed to load sites and material types');
       } finally {
         setLoadingDropdowns(false);
       }
@@ -61,32 +79,66 @@ export default function PurchaseFormScreen({ navigation }: any) {
     loadDropdowns();
   }, []);
 
-  // Auto-calculate Total Amount when Qty or UnitRate changes
+  // Fetch sections and projects when siteId changes
   useEffect(() => {
-    const q = parseFloat(quantity) || 0;
-    const r = parseFloat(unitRate) || 0;
-    if (q > 0 && r > 0) {
-      setTotalAmount((q * r).toString());
+    if (siteId) {
+      api.get(`/site-sections/site/${siteId}`).then(res => setSections(res.data || [])).catch(() => {});
+      api.get(`/site-projects/site/${siteId}`).then(res => setProjects(res.data || [])).catch(() => {});
+    } else {
+      setSections([]);
+      setProjects([]);
     }
-  }, [quantity, unitRate]);
+  }, [siteId]);
 
-  const selectedSite = sites.find((s) => (s.Id || s.id) === siteId);
-  const selectedDealer = materials.find((m) => m.id === materialId);
+  const selectedMatType = materialTypes.find(t => String(t.id) === String(materialId));
+  const currentCalcMode = selectedMatType?.CalculationMode || 'Manual';
 
-  const filteredSites = sites.filter((s) =>
+  // Handle calculations based on CalculationMode and inputs (Win App logic)
+  useEffect(() => {
+    if (!selectedMatType) return;
+    const rate = ratePerUnit !== '' ? parseFloat(ratePerUnit) : parseFloat(selectedMatType.Price || 0);
+
+    if (currentCalcMode === 'SqFtRate') {
+      const len = parseFloat(length || '0');
+      const brd = parseFloat(breadth || '0');
+      const wastage = parseFloat(wastagePercent || '0');
+      
+      const computedSqFt = len * brd;
+      setSqFt(computedSqFt > 0 ? computedSqFt.toFixed(2) : '');
+
+      const billableSqFt = computedSqFt * (1 + wastage / 100);
+      setQuantity(billableSqFt > 0 ? billableSqFt.toFixed(2) : '');
+
+      const computedAmount = billableSqFt * rate;
+      setAmount(computedAmount > 0 ? computedAmount.toFixed(2) : '');
+    } else if (currentCalcMode === 'QuantityRate') {
+      const qty = parseFloat(quantity || '0');
+      const computedAmount = qty * rate;
+      setAmount(computedAmount > 0 ? computedAmount.toFixed(2) : '');
+    } else {
+      const qty = parseFloat(quantity || '0');
+      if (qty > 0 && rate > 0) {
+        setAmount((qty * rate).toFixed(2));
+      }
+    }
+  }, [materialId, quantity, length, breadth, wastagePercent, ratePerUnit, selectedMatType, currentCalcMode]);
+
+  const selectedSite = sites.find(s => (s.Id || s.id) === siteId);
+
+  const filteredSites = sites.filter(s =>
     (s.SiteName || '').toLowerCase().includes(siteSearch.toLowerCase())
   );
 
-  const filteredDealers = materials.filter((m) =>
-    (m.Name || '').toLowerCase().includes(dealerSearch.toLowerCase())
+  const filteredMaterials = materialTypes.filter(m =>
+    (m.Name || '').toLowerCase().includes(materialSearch.toLowerCase())
   );
 
   const handleSubmit = async () => {
     if (!siteId || !materialId) {
-      Alert.alert('Validation Error', 'Please select a Site and Material Dealer');
+      Alert.alert('Validation Error', 'Please select a Site and Material');
       return;
     }
-    const tot = parseFloat(totalAmount) || 0;
+    const tot = parseFloat(amount) || 0;
     if (tot <= 0) {
       Alert.alert('Validation Error', 'Total Amount must be greater than 0');
       return;
@@ -97,22 +149,27 @@ export default function PurchaseFormScreen({ navigation }: any) {
       const payload = {
         SiteId: siteId,
         MaterialId: materialId,
-        SupplierName: supplierName.trim() || selectedDealer?.Name || '',
-        BillNo: billNo.trim(),
         Quantity: parseFloat(quantity) || 0,
-        UnitRate: parseFloat(unitRate) || 0,
-        TotalAmount: tot,
-        PaidAmount: parseFloat(paidAmount) || 0,
-        Remarks: remarks.trim(),
-        PurchaseDate: new Date().toISOString().split('T')[0],
+        Unit: unit,
+        Amount: tot,
+        DealerName: dealerName.trim(),
+        PurchaseDate: purchaseDate || new Date().toISOString().split('T')[0],
+        Length: length ? parseFloat(length) : null,
+        Breadth: breadth ? parseFloat(breadth) : null,
+        SqFt: sqFt ? parseFloat(sqFt) : null,
+        WastagePercent: wastagePercent ? parseFloat(wastagePercent) : 0,
+        RatePerUnit: ratePerUnit ? parseFloat(ratePerUnit) : 0,
+        CalculationMode: currentCalcMode,
+        SectionId: sectionId || null,
+        ProjectId: projectId || null,
       };
 
       await api.post('/site-materials', payload);
-      Alert.alert('Success', 'Purchase recorded successfully', [
+      Alert.alert('Success', 'Record Purchase successfully saved', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.message || 'Failed to create purchase record');
+      Alert.alert('Error', err.response?.data?.msg || err.response?.data?.message || 'Failed to record purchase');
     } finally {
       setSubmitting(false);
     }
@@ -129,10 +186,10 @@ export default function PurchaseFormScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        <Text style={styles.title}>New Material Purchase</Text>
+        <Text style={styles.title}>Record Purchase</Text>
 
-        {/* Select Site Dropdown Field */}
-        <Text style={styles.label}>Select Site *</Text>
+        {/* 1. Site Dropdown */}
+        <Text style={styles.label}>Site *</Text>
         <TouchableOpacity
           style={styles.dropdownSelector}
           onPress={() => {
@@ -141,113 +198,185 @@ export default function PurchaseFormScreen({ navigation }: any) {
           }}
         >
           <Text style={styles.dropdownSelectorText}>
-            {selectedSite ? selectedSite.SiteName : 'Choose a site...'}
+            {selectedSite ? selectedSite.SiteName : 'Select Site'}
           </Text>
           <ChevronDown color={colors.dark.textSecondary} size={20} />
         </TouchableOpacity>
 
-        {/* Select Dealer Dropdown Field */}
-        <Text style={styles.label}>Material Dealer / Supplier *</Text>
+        {/* 2. Material Dropdown */}
+        <Text style={styles.label}>Material *</Text>
         <TouchableOpacity
           style={styles.dropdownSelector}
           onPress={() => {
-            setDealerSearch('');
-            setDealerModalOpen(true);
+            setMaterialSearch('');
+            setMaterialModalOpen(true);
           }}
         >
           <Text style={styles.dropdownSelectorText}>
-            {selectedDealer ? selectedDealer.Name : 'Choose a dealer / supplier...'}
+            {selectedMatType ? selectedMatType.Name : 'Select Material'}
           </Text>
           <ChevronDown color={colors.dark.textSecondary} size={20} />
         </TouchableOpacity>
 
-        <Text style={styles.label}>Bill / Invoice Number</Text>
-        <TextInput
-          style={styles.input}
-          value={billNo}
-          onChangeText={setBillNo}
-          placeholder="e.g. INV-2026-089"
-          placeholderTextColor={colors.dark.textMuted}
-        />
+        {/* Calculation Mode Banner if selected */}
+        {selectedMatType && (
+          <View style={styles.modeInfoBanner}>
+            <Text style={styles.modeInfoText}>
+              Calculation Mode: <Text style={{ fontWeight: 'bold', color: colors.dark.accent }}>{currentCalcMode}</Text> (Rate: ₹{parseFloat(selectedMatType.Price || 0).toLocaleString('en-IN')} per {selectedMatType.DefaultUnit || 'nos'})
+            </Text>
+          </View>
+        )}
 
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        {/* Conditional SqFt Inputs */}
+        {currentCalcMode === 'SqFtRate' ? (
+          <View style={styles.sqFtBox}>
+            <View style={styles.row}>
+              <View style={{ flex: 0.48 }}>
+                <Text style={styles.label}>Length (ft) *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={length}
+                  onChangeText={setLength}
+                  keyboardType="numeric"
+                  placeholder="0.00"
+                  placeholderTextColor={colors.dark.textMuted}
+                />
+              </View>
+              <View style={{ flex: 0.48 }}>
+                <Text style={styles.label}>Breadth (ft) *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={breadth}
+                  onChangeText={setBreadth}
+                  keyboardType="numeric"
+                  placeholder="0.00"
+                  placeholderTextColor={colors.dark.textMuted}
+                />
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={{ flex: 0.48 }}>
+                <Text style={styles.label}>Calculated Area (SqFt)</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.dark.bgPrimary, color: colors.dark.textMuted }]}
+                  value={sqFt}
+                  editable={false}
+                  placeholder="0.00"
+                />
+              </View>
+              <View style={{ flex: 0.48 }}>
+                <Text style={styles.label}>Wastage %</Text>
+                <TextInput
+                  style={styles.input}
+                  value={wastagePercent}
+                  onChangeText={setWastagePercent}
+                  keyboardType="numeric"
+                  placeholder="0"
+                  placeholderTextColor={colors.dark.textMuted}
+                />
+              </View>
+            </View>
+          </View>
+        ) : (
+          /* Quantity & Unit Row */
+          <View style={styles.row}>
+            <View style={{ flex: 0.48 }}>
+              <Text style={styles.label}>Quantity *</Text>
+              <TextInput
+                style={styles.input}
+                value={quantity}
+                onChangeText={setQuantity}
+                keyboardType="numeric"
+                placeholder="0.00"
+                placeholderTextColor={colors.dark.textMuted}
+              />
+            </View>
+            <View style={{ flex: 0.48 }}>
+              <Text style={styles.label}>Unit *</Text>
+              <TouchableOpacity
+                style={styles.dropdownSelector}
+                onPress={() => setUnitModalOpen(true)}
+              >
+                <Text style={styles.dropdownSelectorText}>{unit}</Text>
+                <ChevronDown color={colors.dark.textSecondary} size={20} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Dealer / Vendor & Rate per Unit */}
+        <View style={styles.row}>
           <View style={{ flex: 0.48 }}>
-            <Text style={styles.label}>Quantity</Text>
+            <Text style={styles.label}>Dealer / Vendor *</Text>
             <TextInput
               style={styles.input}
-              value={quantity}
-              onChangeText={setQuantity}
-              keyboardType="numeric"
-              placeholder="e.g. 100"
+              value={dealerName}
+              onChangeText={setDealerName}
+              placeholder="Enter dealer name"
               placeholderTextColor={colors.dark.textMuted}
             />
           </View>
           <View style={{ flex: 0.48 }}>
-            <Text style={styles.label}>Unit Rate (₹)</Text>
+            <Text style={styles.label}>
+              {currentCalcMode === 'SqFtRate' ? 'Rate per SqFt (₹) *' : 'Rate per Unit (₹) *'}
+            </Text>
             <TextInput
               style={styles.input}
-              value={unitRate}
-              onChangeText={setUnitRate}
+              value={ratePerUnit}
+              onChangeText={setRatePerUnit}
               keyboardType="numeric"
-              placeholder="e.g. 450"
+              placeholder="Rate"
               placeholderTextColor={colors.dark.textMuted}
             />
           </View>
         </View>
 
-        <Text style={styles.label}>Total Amount (₹) *</Text>
-        <TextInput
-          style={[styles.input, { fontWeight: 'bold', color: colors.dark.accent }]}
-          value={totalAmount}
-          onChangeText={setTotalAmount}
-          keyboardType="numeric"
-          placeholder="0.00"
-          placeholderTextColor={colors.dark.textMuted}
-        />
+        {/* Total Amount & Purchase Date */}
+        <View style={styles.row}>
+          <View style={{ flex: 0.48 }}>
+            <Text style={styles.label}>Total Amount (₹) *</Text>
+            <TextInput
+              style={[styles.input, { fontWeight: 'bold', color: colors.dark.accent }]}
+              value={amount}
+              onChangeText={setAmount}
+              keyboardType="numeric"
+              placeholder="Total cost"
+              placeholderTextColor={colors.dark.textMuted}
+            />
+          </View>
+          <View style={{ flex: 0.48 }}>
+            <Text style={styles.label}>Purchase Date *</Text>
+            <TextInput
+              style={styles.input}
+              value={purchaseDate}
+              onChangeText={setPurchaseDate}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={colors.dark.textMuted}
+            />
+          </View>
+        </View>
 
-        <Text style={styles.label}>Paid Amount (Advance/Partial) (₹)</Text>
-        <TextInput
-          style={styles.input}
-          value={paidAmount}
-          onChangeText={setPaidAmount}
-          keyboardType="numeric"
-          placeholder="0.00"
-          placeholderTextColor={colors.dark.textMuted}
-        />
-
-        <Text style={styles.label}>Remarks / Notes</Text>
-        <TextInput
-          style={[styles.input, { height: 60 }]}
-          value={remarks}
-          onChangeText={setRemarks}
-          multiline
-          placeholder="e.g. Delivered 50 bags OPC cement"
-          placeholderTextColor={colors.dark.textMuted}
-        />
-
+        {/* Action Button */}
         <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting}>
           {submitting ? (
             <ActivityIndicator color="#000" />
           ) : (
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Check color="#000" size={20} style={{ marginRight: 8 }} />
-              <Text style={styles.submitBtnText}>Save Purchase Entry</Text>
-            </View>
+            <Text style={styles.submitBtnText}>Record Purchase</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Searchable Site Modal */}
+      {/* 1. Searchable Site Modal */}
       <Modal visible={siteModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Construction Site</Text>
+              <Text style={styles.modalTitle}>Select Site</Text>
               <TouchableOpacity onPress={() => setSiteModalOpen(false)}>
                 <X color={colors.dark.textPrimary} size={24} />
               </TouchableOpacity>
             </View>
-
             <View style={styles.searchBox}>
               <Search color={colors.dark.textMuted} size={18} style={{ marginRight: 8 }} />
               <TextInput
@@ -258,7 +387,6 @@ export default function PurchaseFormScreen({ navigation }: any) {
                 placeholderTextColor={colors.dark.textMuted}
               />
             </View>
-
             <FlatList
               data={filteredSites}
               keyExtractor={(item) => (item.Id || item.id).toString()}
@@ -286,30 +414,28 @@ export default function PurchaseFormScreen({ navigation }: any) {
         </View>
       </Modal>
 
-      {/* Searchable Dealer Modal */}
-      <Modal visible={dealerModalOpen} animationType="slide" transparent>
+      {/* 2. Searchable Material Modal */}
+      <Modal visible={materialModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Material Dealer</Text>
-              <TouchableOpacity onPress={() => setDealerModalOpen(false)}>
+              <Text style={styles.modalTitle}>Select Material</Text>
+              <TouchableOpacity onPress={() => setMaterialModalOpen(false)}>
                 <X color={colors.dark.textPrimary} size={24} />
               </TouchableOpacity>
             </View>
-
             <View style={styles.searchBox}>
               <Search color={colors.dark.textMuted} size={18} style={{ marginRight: 8 }} />
               <TextInput
                 style={styles.searchInput}
-                value={dealerSearch}
-                onChangeText={setDealerSearch}
-                placeholder="Search dealers..."
+                value={materialSearch}
+                onChangeText={setMaterialSearch}
+                placeholder="Search material types..."
                 placeholderTextColor={colors.dark.textMuted}
               />
             </View>
-
             <FlatList
-              data={filteredDealers}
+              data={filteredMaterials}
               keyExtractor={(item) => item.id.toString()}
               style={{ maxHeight: 300 }}
               renderItem={({ item }) => {
@@ -319,18 +445,60 @@ export default function PurchaseFormScreen({ navigation }: any) {
                     style={[styles.listItem, isSelected && styles.listItemActive]}
                     onPress={() => {
                       setMaterialId(item.id);
-                      setSupplierName(item.Name || '');
-                      setDealerModalOpen(false);
+                      setUnit(item.DefaultUnit || 'nos');
+                      setRatePerUnit(item.Price ? String(item.Price) : '');
+                      setLength('');
+                      setBreadth('');
+                      setSqFt('');
+                      setWastagePercent('0');
+                      setAmount('');
+                      setMaterialModalOpen(false);
                     }}
                   >
                     <View>
                       <Text style={[styles.listItemText, isSelected && styles.listItemTextActive]}>
                         {item.Name}
                       </Text>
-                      {item.MaterialTypeName && (
-                        <Text style={styles.listItemSub}>{item.MaterialTypeName}</Text>
-                      )}
+                      <Text style={styles.listItemSub}>
+                        {item.CalculationMode || 'Manual'} | ₹{item.Price || 0} / {item.DefaultUnit || 'nos'}
+                      </Text>
                     </View>
+                    {isSelected && <Check color={colors.dark.accent} size={18} />}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* 3. Unit Selector Modal */}
+      <Modal visible={unitModalOpen} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Unit</Text>
+              <TouchableOpacity onPress={() => setUnitModalOpen(false)}>
+                <X color={colors.dark.textPrimary} size={24} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={UNITS}
+              keyExtractor={(item) => item}
+              style={{ maxHeight: 300 }}
+              renderItem={({ item }) => {
+                const isSelected = unit === item;
+                return (
+                  <TouchableOpacity
+                    style={[styles.listItem, isSelected && styles.listItemActive]}
+                    onPress={() => {
+                      setUnit(item);
+                      setUnitModalOpen(false);
+                    }}
+                  >
+                    <Text style={[styles.listItemText, isSelected && styles.listItemTextActive]}>
+                      {item}
+                    </Text>
                     {isSelected && <Check color={colors.dark.accent} size={18} />}
                   </TouchableOpacity>
                 );
@@ -362,10 +530,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.dark.textSecondary,
     marginBottom: 6,
     marginTop: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   dropdownSelector: {
     flexDirection: 'row',
@@ -373,36 +546,55 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: colors.dark.bgSecondary,
     borderRadius: 10,
-    padding: 14,
-    marginBottom: 14,
+    padding: 12,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.dark.border,
   },
   dropdownSelectorText: {
     fontSize: 14,
     color: colors.dark.textPrimary,
-    fontWeight: '500',
   },
   input: {
     backgroundColor: colors.dark.bgSecondary,
     borderRadius: 10,
     padding: 12,
     color: colors.dark.textPrimary,
-    marginBottom: 14,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.dark.border,
+  },
+  modeInfoBanner: {
+    backgroundColor: 'rgba(255, 179, 0, 0.08)',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 179, 0, 0.2)',
+  },
+  modeInfoText: {
+    fontSize: 12,
+    color: colors.dark.textSecondary,
+  },
+  sqFtBox: {
+    borderWidth: 1,
+    borderColor: colors.dark.border,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.01)',
   },
   submitBtn: {
     backgroundColor: colors.dark.accent,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: 16,
   },
   submitBtnText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#0F0F1A',
   },
   modalOverlay: {
     flex: 1,
