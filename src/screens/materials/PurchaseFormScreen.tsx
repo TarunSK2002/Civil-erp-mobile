@@ -7,11 +7,13 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Modal,
+  FlatList,
   Alert,
 } from 'react-native';
 import { colors } from '../../theme/colors';
 import api from '../../api/client';
-import { Check } from 'lucide-react-native';
+import { Check, ChevronDown, Search, X } from 'lucide-react-native';
 
 export default function PurchaseFormScreen({ navigation }: any) {
   const [sites, setSites] = useState<any[]>([]);
@@ -30,6 +32,12 @@ export default function PurchaseFormScreen({ navigation }: any) {
   const [remarks, setRemarks] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Dropdown Modals State
+  const [siteModalOpen, setSiteModalOpen] = useState(false);
+  const [siteSearch, setSiteSearch] = useState('');
+  const [dealerModalOpen, setDealerModalOpen] = useState(false);
+  const [dealerSearch, setDealerSearch] = useState('');
+
   useEffect(() => {
     async function loadDropdowns() {
       try {
@@ -40,7 +48,10 @@ export default function PurchaseFormScreen({ navigation }: any) {
         setSites(sitesRes.data || []);
         setMaterials(materialsRes.data || []);
         if (sitesRes.data?.length > 0) setSiteId(sitesRes.data[0].Id || sitesRes.data[0].id);
-        if (materialsRes.data?.length > 0) setMaterialId(materialsRes.data[0].id);
+        if (materialsRes.data?.length > 0) {
+          setMaterialId(materialsRes.data[0].id);
+          setSupplierName(materialsRes.data[0].Name || '');
+        }
       } catch (err: any) {
         Alert.alert('Error', 'Failed to load sites and material dealers');
       } finally {
@@ -59,6 +70,17 @@ export default function PurchaseFormScreen({ navigation }: any) {
     }
   }, [quantity, unitRate]);
 
+  const selectedSite = sites.find((s) => (s.Id || s.id) === siteId);
+  const selectedDealer = materials.find((m) => m.id === materialId);
+
+  const filteredSites = sites.filter((s) =>
+    (s.SiteName || '').toLowerCase().includes(siteSearch.toLowerCase())
+  );
+
+  const filteredDealers = materials.filter((m) =>
+    (m.Name || '').toLowerCase().includes(dealerSearch.toLowerCase())
+  );
+
   const handleSubmit = async () => {
     if (!siteId || !materialId) {
       Alert.alert('Validation Error', 'Please select a Site and Material Dealer');
@@ -75,7 +97,7 @@ export default function PurchaseFormScreen({ navigation }: any) {
       const payload = {
         SiteId: siteId,
         MaterialId: materialId,
-        SupplierName: supplierName.trim(),
+        SupplierName: supplierName.trim() || selectedDealer?.Name || '',
         BillNo: billNo.trim(),
         Quantity: parseFloat(quantity) || 0,
         UnitRate: parseFloat(unitRate) || 0,
@@ -105,122 +127,219 @@ export default function PurchaseFormScreen({ navigation }: any) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <Text style={styles.title}>New Material Purchase</Text>
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        <Text style={styles.title}>New Material Purchase</Text>
 
-      {/* Select Site */}
-      <Text style={styles.label}>Select Site *</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-        {sites.map((s) => {
-          const sId = s.Id || s.id;
-          const isSelected = siteId === sId;
-          return (
-            <TouchableOpacity
-              key={sId}
-              style={[styles.chip, isSelected && styles.chipActive]}
-              onPress={() => setSiteId(sId)}
-            >
-              <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>{s.SiteName}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+        {/* Select Site Dropdown Field */}
+        <Text style={styles.label}>Select Site *</Text>
+        <TouchableOpacity
+          style={styles.dropdownSelector}
+          onPress={() => {
+            setSiteSearch('');
+            setSiteModalOpen(true);
+          }}
+        >
+          <Text style={styles.dropdownSelectorText}>
+            {selectedSite ? selectedSite.SiteName : 'Choose a site...'}
+          </Text>
+          <ChevronDown color={colors.dark.textSecondary} size={20} />
+        </TouchableOpacity>
 
-      {/* Select Dealer */}
-      <Text style={styles.label}>Material Dealer / Supplier *</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-        {materials.map((m) => {
-          const isSelected = materialId === m.id;
-          return (
-            <TouchableOpacity
-              key={m.id}
-              style={[styles.chip, isSelected && styles.chipActive]}
-              onPress={() => {
-                setMaterialId(m.id);
-                if (m.Name) setSupplierName(m.Name);
-              }}
-            >
-              <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>{m.Name}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+        {/* Select Dealer Dropdown Field */}
+        <Text style={styles.label}>Material Dealer / Supplier *</Text>
+        <TouchableOpacity
+          style={styles.dropdownSelector}
+          onPress={() => {
+            setDealerSearch('');
+            setDealerModalOpen(true);
+          }}
+        >
+          <Text style={styles.dropdownSelectorText}>
+            {selectedDealer ? selectedDealer.Name : 'Choose a dealer / supplier...'}
+          </Text>
+          <ChevronDown color={colors.dark.textSecondary} size={20} />
+        </TouchableOpacity>
 
-      <Text style={styles.label}>Bill / Invoice Number</Text>
-      <TextInput
-        style={styles.input}
-        value={billNo}
-        onChangeText={setBillNo}
-        placeholder="e.g. INV-2026-089"
-        placeholderTextColor={colors.dark.textMuted}
-      />
+        <Text style={styles.label}>Bill / Invoice Number</Text>
+        <TextInput
+          style={styles.input}
+          value={billNo}
+          onChangeText={setBillNo}
+          placeholder="e.g. INV-2026-089"
+          placeholderTextColor={colors.dark.textMuted}
+        />
 
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <View style={{ flex: 0.48 }}>
-          <Text style={styles.label}>Quantity</Text>
-          <TextInput
-            style={styles.input}
-            value={quantity}
-            onChangeText={setQuantity}
-            keyboardType="numeric"
-            placeholder="e.g. 100"
-            placeholderTextColor={colors.dark.textMuted}
-          />
-        </View>
-        <View style={{ flex: 0.48 }}>
-          <Text style={styles.label}>Unit Rate (₹)</Text>
-          <TextInput
-            style={styles.input}
-            value={unitRate}
-            onChangeText={setUnitRate}
-            keyboardType="numeric"
-            placeholder="e.g. 450"
-            placeholderTextColor={colors.dark.textMuted}
-          />
-        </View>
-      </View>
-
-      <Text style={styles.label}>Total Amount (₹) *</Text>
-      <TextInput
-        style={[styles.input, { fontWeight: 'bold', color: colors.dark.accent }]}
-        value={totalAmount}
-        onChangeText={setTotalAmount}
-        keyboardType="numeric"
-        placeholder="0.00"
-        placeholderTextColor={colors.dark.textMuted}
-      />
-
-      <Text style={styles.label}>Paid Amount (Advance/Partial) (₹)</Text>
-      <TextInput
-        style={styles.input}
-        value={paidAmount}
-        onChangeText={setPaidAmount}
-        keyboardType="numeric"
-        placeholder="0.00"
-        placeholderTextColor={colors.dark.textMuted}
-      />
-
-      <Text style={styles.label}>Remarks / Notes</Text>
-      <TextInput
-        style={[styles.input, { height: 60 }]}
-        value={remarks}
-        onChangeText={setRemarks}
-        multiline
-        placeholder="e.g. Delivered 50 bags OPC cement"
-        placeholderTextColor={colors.dark.textMuted}
-      />
-
-      <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting}>
-        {submitting ? (
-          <ActivityIndicator color="#000" />
-        ) : (
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Check color="#000" size={20} style={{ marginRight: 8 }} />
-            <Text style={styles.submitBtnText}>Save Purchase Entry</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <View style={{ flex: 0.48 }}>
+            <Text style={styles.label}>Quantity</Text>
+            <TextInput
+              style={styles.input}
+              value={quantity}
+              onChangeText={setQuantity}
+              keyboardType="numeric"
+              placeholder="e.g. 100"
+              placeholderTextColor={colors.dark.textMuted}
+            />
           </View>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+          <View style={{ flex: 0.48 }}>
+            <Text style={styles.label}>Unit Rate (₹)</Text>
+            <TextInput
+              style={styles.input}
+              value={unitRate}
+              onChangeText={setUnitRate}
+              keyboardType="numeric"
+              placeholder="e.g. 450"
+              placeholderTextColor={colors.dark.textMuted}
+            />
+          </View>
+        </View>
+
+        <Text style={styles.label}>Total Amount (₹) *</Text>
+        <TextInput
+          style={[styles.input, { fontWeight: 'bold', color: colors.dark.accent }]}
+          value={totalAmount}
+          onChangeText={setTotalAmount}
+          keyboardType="numeric"
+          placeholder="0.00"
+          placeholderTextColor={colors.dark.textMuted}
+        />
+
+        <Text style={styles.label}>Paid Amount (Advance/Partial) (₹)</Text>
+        <TextInput
+          style={styles.input}
+          value={paidAmount}
+          onChangeText={setPaidAmount}
+          keyboardType="numeric"
+          placeholder="0.00"
+          placeholderTextColor={colors.dark.textMuted}
+        />
+
+        <Text style={styles.label}>Remarks / Notes</Text>
+        <TextInput
+          style={[styles.input, { height: 60 }]}
+          value={remarks}
+          onChangeText={setRemarks}
+          multiline
+          placeholder="e.g. Delivered 50 bags OPC cement"
+          placeholderTextColor={colors.dark.textMuted}
+        />
+
+        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting}>
+          {submitting ? (
+            <ActivityIndicator color="#000" />
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Check color="#000" size={20} style={{ marginRight: 8 }} />
+              <Text style={styles.submitBtnText}>Save Purchase Entry</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Searchable Site Modal */}
+      <Modal visible={siteModalOpen} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Construction Site</Text>
+              <TouchableOpacity onPress={() => setSiteModalOpen(false)}>
+                <X color={colors.dark.textPrimary} size={24} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.searchBox}>
+              <Search color={colors.dark.textMuted} size={18} style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.searchInput}
+                value={siteSearch}
+                onChangeText={setSiteSearch}
+                placeholder="Search sites..."
+                placeholderTextColor={colors.dark.textMuted}
+              />
+            </View>
+
+            <FlatList
+              data={filteredSites}
+              keyExtractor={(item) => (item.Id || item.id).toString()}
+              style={{ maxHeight: 300 }}
+              renderItem={({ item }) => {
+                const sId = item.Id || item.id;
+                const isSelected = siteId === sId;
+                return (
+                  <TouchableOpacity
+                    style={[styles.listItem, isSelected && styles.listItemActive]}
+                    onPress={() => {
+                      setSiteId(sId);
+                      setSiteModalOpen(false);
+                    }}
+                  >
+                    <Text style={[styles.listItemText, isSelected && styles.listItemTextActive]}>
+                      {item.SiteName}
+                    </Text>
+                    {isSelected && <Check color={colors.dark.accent} size={18} />}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Searchable Dealer Modal */}
+      <Modal visible={dealerModalOpen} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Material Dealer</Text>
+              <TouchableOpacity onPress={() => setDealerModalOpen(false)}>
+                <X color={colors.dark.textPrimary} size={24} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.searchBox}>
+              <Search color={colors.dark.textMuted} size={18} style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.searchInput}
+                value={dealerSearch}
+                onChangeText={setDealerSearch}
+                placeholder="Search dealers..."
+                placeholderTextColor={colors.dark.textMuted}
+              />
+            </View>
+
+            <FlatList
+              data={filteredDealers}
+              keyExtractor={(item) => item.id.toString()}
+              style={{ maxHeight: 300 }}
+              renderItem={({ item }) => {
+                const isSelected = materialId === item.id;
+                return (
+                  <TouchableOpacity
+                    style={[styles.listItem, isSelected && styles.listItemActive]}
+                    onPress={() => {
+                      setMaterialId(item.id);
+                      setSupplierName(item.Name || '');
+                      setDealerModalOpen(false);
+                    }}
+                  >
+                    <View>
+                      <Text style={[styles.listItemText, isSelected && styles.listItemTextActive]}>
+                        {item.Name}
+                      </Text>
+                      {item.MaterialTypeName && (
+                        <Text style={styles.listItemSub}>{item.MaterialTypeName}</Text>
+                      )}
+                    </View>
+                    {isSelected && <Check color={colors.dark.accent} size={18} />}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
@@ -245,32 +364,24 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     color: colors.dark.textSecondary,
-    marginBottom: 8,
+    marginBottom: 6,
     marginTop: 4,
   },
-  chipRow: {
-    marginBottom: 16,
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 16,
+  dropdownSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: colors.dark.bgSecondary,
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 14,
     borderWidth: 1,
     borderColor: colors.dark.border,
-    marginRight: 8,
   },
-  chipActive: {
-    backgroundColor: colors.dark.accent,
-    borderColor: colors.dark.accent,
-  },
-  chipText: {
-    fontSize: 13,
-    color: colors.dark.textSecondary,
-  },
-  chipTextActive: {
-    color: '#000',
-    fontWeight: 'bold',
+  dropdownSelectorText: {
+    fontSize: 14,
+    color: colors.dark.textPrimary,
+    fontWeight: '500',
   },
   input: {
     backgroundColor: colors.dark.bgSecondary,
@@ -292,5 +403,70 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.dark.bgSecondary,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.dark.textPrimary,
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.dark.bgInput,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    height: 44,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.dark.border,
+  },
+  searchInput: {
+    flex: 1,
+    color: colors.dark.textPrimary,
+    fontSize: 14,
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.dark.border,
+  },
+  listItemActive: {
+    backgroundColor: 'rgba(255,179,0,0.08)',
+    borderRadius: 8,
+  },
+  listItemText: {
+    fontSize: 14,
+    color: colors.dark.textPrimary,
+  },
+  listItemTextActive: {
+    color: colors.dark.accent,
+    fontWeight: 'bold',
+  },
+  listItemSub: {
+    fontSize: 11,
+    color: colors.dark.textMuted,
+    marginTop: 2,
   },
 });
