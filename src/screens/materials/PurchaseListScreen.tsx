@@ -16,15 +16,19 @@ import { ShoppingBag, Plus, Calendar, Store, Trash2 } from 'lucide-react-native'
 interface SiteMaterial {
   id: number;
   SiteId: number;
+  Site?: { SiteName: string };
   SiteName?: string;
   MaterialId: number;
+  Material?: { Name: string };
   MaterialName?: string;
   SupplierName?: string;
+  DealerName?: string;
   BillNo?: string;
   PurchaseDate?: string;
-  TotalAmount: number;
-  PaidAmount: number;
-  PaymentStatus: string;
+  Amount?: number;
+  TotalAmount?: number;
+  PaidAmount?: number;
+  PaymentStatus?: string;
   Remarks?: string;
 }
 
@@ -72,11 +76,16 @@ export default function PurchaseListScreen({ navigation }: any) {
 
   const filteredPurchases = purchases.filter((p) => {
     const term = search.toLowerCase();
+    const siteName = p.Site?.SiteName || p.SiteName || '';
+    const matName = p.Material?.Name || p.MaterialName || '';
+    const dealerName = p.DealerName || p.SupplierName || '';
+    const bill = p.BillNo || '';
+
     return (
-      p.SiteName?.toLowerCase().includes(term) ||
-      p.MaterialName?.toLowerCase().includes(term) ||
-      p.SupplierName?.toLowerCase().includes(term) ||
-      p.BillNo?.toLowerCase().includes(term)
+      siteName.toLowerCase().includes(term) ||
+      matName.toLowerCase().includes(term) ||
+      dealerName.toLowerCase().includes(term) ||
+      bill.toLowerCase().includes(term)
     );
   });
 
@@ -102,48 +111,56 @@ export default function PurchaseListScreen({ navigation }: any) {
           data={filteredPurchases}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ paddingBottom: 80 }}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.iconBox}>
-                  <ShoppingBag color={colors.dark.accent} size={20} />
-                </View>
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.siteName}>{item.SiteName || 'Site Purchase'}</Text>
-                  <Text style={styles.materialName}>{item.MaterialName || 'Material'}</Text>
-                </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.amount}>₹{(item.TotalAmount || 0).toLocaleString('en-IN')}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.PaymentStatus) + '20' }]}>
-                    <Text style={[styles.statusText, { color: getStatusColor(item.PaymentStatus) }]}>
-                      {item.PaymentStatus || 'UNPAID'}
-                    </Text>
-                  </View>
-                </View>
-              </View>
+          renderItem={({ item }) => {
+            const siteName = item.Site?.SiteName || item.SiteName || 'Site Purchase';
+            const materialName = item.Material?.Name || item.MaterialName || 'Material';
+            const supplierName = item.DealerName || item.SupplierName || '';
+            const total = item.Amount !== undefined ? item.Amount : item.TotalAmount || 0;
+            const status = item.PaymentStatus || 'UNPAID';
 
-              <View style={styles.cardBody}>
-                {item.SupplierName ? (
-                  <View style={styles.infoRow}>
-                    <Store color={colors.dark.textMuted} size={14} />
-                    <Text style={styles.infoText}>{item.SupplierName}</Text>
+            return (
+              <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.iconBox}>
+                    <ShoppingBag color={colors.dark.accent} size={20} />
                   </View>
-                ) : null}
-                {item.PurchaseDate ? (
-                  <View style={styles.infoRow}>
-                    <Calendar color={colors.dark.textMuted} size={14} />
-                    <Text style={styles.infoText}>
-                      {new Date(item.PurchaseDate).toLocaleDateString('en-IN')}
-                    </Text>
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text style={styles.siteName}>{siteName}</Text>
+                    <Text style={styles.materialName}>{materialName}</Text>
                   </View>
-                ) : null}
-              </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={styles.amount}>₹{Number(total).toLocaleString('en-IN')}</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(status) + '20' }]}>
+                      <Text style={[styles.statusText, { color: getStatusColor(status) }]}>
+                        {status}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
 
-              <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item)}>
-                <Trash2 color={colors.dark.error} size={16} />
-              </TouchableOpacity>
-            </View>
-          )}
+                <View style={styles.cardBody}>
+                  {supplierName ? (
+                    <View style={styles.infoRow}>
+                      <Store color={colors.dark.textMuted} size={14} />
+                      <Text style={styles.infoText}>{supplierName}</Text>
+                    </View>
+                  ) : null}
+                  {item.PurchaseDate ? (
+                    <View style={styles.infoRow}>
+                      <Calendar color={colors.dark.textMuted} size={14} />
+                      <Text style={styles.infoText}>
+                        {new Date(item.PurchaseDate).toLocaleDateString('en-IN')}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item)}>
+                  <Trash2 color={colors.dark.error} size={16} />
+                </TouchableOpacity>
+              </View>
+            );
+          }}
         />
       )}
 

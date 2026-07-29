@@ -16,10 +16,11 @@ import { DollarSign, Plus, Calendar, Trash2, X, Wallet } from 'lucide-react-nati
 
 interface PersonalExpense {
   id: number;
-  Category: string;
+  Category?: string;
   Amount: number;
-  ExpenseDate: string;
+  ExpenseDate?: string;
   Description?: string;
+  Notes?: string;
 }
 
 export default function PettyCashScreen() {
@@ -77,7 +78,7 @@ export default function PettyCashScreen() {
       setDescription('');
       fetchData();
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.message || 'Failed to log expense');
+      Alert.alert('Error', err.response?.data?.msg || err.response?.data?.message || 'Failed to log expense');
     } finally {
       setSubmitting(false);
     }
@@ -101,7 +102,15 @@ export default function PettyCashScreen() {
     ]);
   };
 
-  const totalSpent = expenses.reduce((acc, curr) => acc + (curr.Amount || 0), 0);
+  const totalSpent = expenses.reduce((acc, curr) => acc + (Number(curr.Amount) || 0), 0);
+
+  // Safely extract running balance from API response { currentBalance, history } or direct object
+  const currentRunningBalance =
+    pettyCashSummary?.currentBalance !== undefined
+      ? pettyCashSummary.currentBalance
+      : pettyCashSummary?.CurrentBalance !== undefined
+      ? pettyCashSummary.CurrentBalance
+      : null;
 
   return (
     <View style={styles.container}>
@@ -116,11 +125,11 @@ export default function PettyCashScreen() {
             <Text style={styles.balanceLabel}>Total Logged Expenses</Text>
             <Text style={styles.balanceAmount}>₹{totalSpent.toLocaleString('en-IN')}</Text>
           </View>
-          {pettyCashSummary?.CurrentBalance !== undefined && (
+          {currentRunningBalance !== null && (
             <View style={{ alignItems: 'flex-end' }}>
               <Text style={styles.balanceLabel}>Petty Cash Balance</Text>
               <Text style={[styles.balanceAmount, { color: colors.dark.success }]}>
-                ₹{(pettyCashSummary.CurrentBalance || 0).toLocaleString('en-IN')}
+                ₹{Number(currentRunningBalance).toLocaleString('en-IN')}
               </Text>
             </View>
           )}
@@ -136,31 +145,35 @@ export default function PettyCashScreen() {
           data={expenses}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ paddingBottom: 80 }}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.iconBox}>
-                  <DollarSign color={colors.dark.accent} size={20} />
-                </View>
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.catText}>{item.Category}</Text>
-                  {item.Description ? (
-                    <Text style={styles.descText}>{item.Description}</Text>
-                  ) : null}
-                  <View style={styles.dateRow}>
-                    <Calendar color={colors.dark.textMuted} size={12} />
-                    <Text style={styles.dateText}>
-                      {new Date(item.ExpenseDate).toLocaleDateString('en-IN')}
-                    </Text>
+          renderItem={({ item }) => {
+            const categoryName = item.Category || 'General Expense';
+            const desc = item.Description || item.Notes || '';
+            const expDate = item.ExpenseDate ? new Date(item.ExpenseDate).toLocaleDateString('en-IN') : '';
+
+            return (
+              <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.iconBox}>
+                    <DollarSign color={colors.dark.accent} size={20} />
                   </View>
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text style={styles.catText}>{categoryName}</Text>
+                    {desc ? <Text style={styles.descText}>{desc}</Text> : null}
+                    {expDate ? (
+                      <View style={styles.dateRow}>
+                        <Calendar color={colors.dark.textMuted} size={12} />
+                        <Text style={styles.dateText}>{expDate}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  <Text style={styles.amountText}>₹{Number(item.Amount || 0).toLocaleString('en-IN')}</Text>
+                  <TouchableOpacity onPress={() => handleDeleteExpense(item.id)} style={{ padding: 6, marginLeft: 8 }}>
+                    <Trash2 color={colors.dark.error} size={16} />
+                  </TouchableOpacity>
                 </View>
-                <Text style={styles.amountText}>₹{(item.Amount || 0).toLocaleString('en-IN')}</Text>
-                <TouchableOpacity onPress={() => handleDeleteExpense(item.id)} style={{ padding: 6, marginLeft: 8 }}>
-                  <Trash2 color={colors.dark.error} size={16} />
-                </TouchableOpacity>
               </View>
-            </View>
-          )}
+            );
+          }}
         />
       )}
 

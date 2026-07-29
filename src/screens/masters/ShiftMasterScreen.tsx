@@ -17,8 +17,11 @@ import { Clock, Plus, Edit2, Trash2, X } from 'lucide-react-native';
 
 interface ShiftMaster {
   id: number;
-  ShiftName: string;
-  Multiplier: number;
+  ShiftType?: string;
+  ShiftName?: string;
+  ShiftMultiplier?: number;
+  Multiplier?: number;
+  Rate?: number;
   Description?: string;
 }
 
@@ -61,8 +64,9 @@ export default function ShiftMasterScreen() {
 
   const openEditModal = (item: ShiftMaster) => {
     setEditingShift(item);
-    setShiftName(item.ShiftName || '');
-    setMultiplier(item.Multiplier ? item.Multiplier.toString() : '1.0');
+    setShiftName(item.ShiftType || item.ShiftName || '');
+    const mult = item.ShiftMultiplier !== undefined ? item.ShiftMultiplier : item.Multiplier || 1.0;
+    setMultiplier(mult ? mult.toString() : '1.0');
     setDescription(item.Description || '');
     setModalVisible(true);
   };
@@ -75,8 +79,8 @@ export default function ShiftMasterScreen() {
     setSubmitting(true);
     try {
       const payload = {
-        ShiftName: shiftName.trim(),
-        Multiplier: parseFloat(multiplier) || 1.0,
+        ShiftType: shiftName.trim(),
+        ShiftMultiplier: parseFloat(multiplier) || 1.0,
         Description: description.trim(),
       };
 
@@ -89,14 +93,15 @@ export default function ShiftMasterScreen() {
       setModalVisible(false);
       fetchShifts();
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.message || 'Failed to save shift');
+      Alert.alert('Error', err.response?.data?.msg || err.response?.data?.message || 'Failed to save shift');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = (item: ShiftMaster) => {
-    Alert.alert('Delete Shift', `Delete "${item.ShiftName}"?`, [
+    const name = item.ShiftType || item.ShiftName || 'this shift';
+    Alert.alert('Delete Shift', `Delete "${name}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -113,9 +118,10 @@ export default function ShiftMasterScreen() {
     ]);
   };
 
-  const filteredShifts = shifts.filter((s) =>
-    s.ShiftName?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredShifts = shifts.filter((s) => {
+    const name = s.ShiftType || s.ShiftName || '';
+    return name.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
     <View style={styles.container}>
@@ -128,31 +134,36 @@ export default function ShiftMasterScreen() {
           data={filteredShifts}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ paddingBottom: 80 }}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.iconBox}>
-                  <Clock color={colors.dark.accent} size={20} />
+          renderItem={({ item }) => {
+            const name = item.ShiftType || item.ShiftName || 'Shift';
+            const mult = item.ShiftMultiplier !== undefined ? item.ShiftMultiplier : item.Multiplier || 1.0;
+
+            return (
+              <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.iconBox}>
+                    <Clock color={colors.dark.accent} size={20} />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text style={styles.shiftName}>{name}</Text>
+                    {item.Description ? (
+                      <Text style={styles.shiftDesc}>{item.Description}</Text>
+                    ) : null}
+                  </View>
+                  <View style={{ alignItems: 'flex-end', marginRight: 12 }}>
+                    <Text style={styles.multLabel}>Multiplier</Text>
+                    <Text style={styles.multValue}>{mult}x</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => openEditModal(item)} style={{ padding: 4, marginRight: 6 }}>
+                    <Edit2 color={colors.dark.textSecondary} size={18} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDelete(item)} style={{ padding: 4 }}>
+                    <Trash2 color={colors.dark.error} size={18} />
+                  </TouchableOpacity>
                 </View>
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.shiftName}>{item.ShiftName}</Text>
-                  {item.Description ? (
-                    <Text style={styles.shiftDesc}>{item.Description}</Text>
-                  ) : null}
-                </View>
-                <View style={{ alignItems: 'flex-end', marginRight: 12 }}>
-                  <Text style={styles.multLabel}>Multiplier</Text>
-                  <Text style={styles.multValue}>{item.Multiplier}x</Text>
-                </View>
-                <TouchableOpacity onPress={() => openEditModal(item)} style={{ padding: 4, marginRight: 6 }}>
-                  <Edit2 color={colors.dark.textSecondary} size={18} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDelete(item)} style={{ padding: 4 }}>
-                  <Trash2 color={colors.dark.error} size={18} />
-                </TouchableOpacity>
               </View>
-            </View>
-          )}
+            );
+          }}
         />
       )}
 

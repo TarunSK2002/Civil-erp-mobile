@@ -17,7 +17,9 @@ import { UserCheck, Plus, Edit2, Trash2, X } from 'lucide-react-native';
 
 interface PersonType {
   id: number;
-  PersonTypeName: string;
+  Name?: string;
+  PersonTypeName?: string;
+  DailyRate?: number;
   DefaultWage?: number;
   Description?: string;
 }
@@ -61,8 +63,9 @@ export default function PersonTypeScreen() {
 
   const openEditModal = (item: PersonType) => {
     setEditingType(item);
-    setTypeName(item.PersonTypeName || '');
-    setDefaultWage(item.DefaultWage ? item.DefaultWage.toString() : '');
+    setTypeName(item.Name || item.PersonTypeName || '');
+    const wage = item.DailyRate !== undefined ? item.DailyRate : item.DefaultWage || 0;
+    setDefaultWage(wage ? wage.toString() : '');
     setDescription(item.Description || '');
     setModalVisible(true);
   };
@@ -75,8 +78,8 @@ export default function PersonTypeScreen() {
     setSubmitting(true);
     try {
       const payload = {
-        PersonTypeName: typeName.trim(),
-        DefaultWage: parseFloat(defaultWage) || 0,
+        Name: typeName.trim(),
+        DailyRate: parseFloat(defaultWage) || 0,
         Description: description.trim(),
       };
 
@@ -89,14 +92,15 @@ export default function PersonTypeScreen() {
       setModalVisible(false);
       fetchTypes();
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.message || 'Failed to save person type');
+      Alert.alert('Error', err.response?.data?.msg || err.response?.data?.message || 'Failed to save person type');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = (item: PersonType) => {
-    Alert.alert('Delete Person Type', `Delete "${item.PersonTypeName}"?`, [
+    const name = item.Name || item.PersonTypeName || 'this person type';
+    Alert.alert('Delete Person Type', `Delete "${name}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -113,9 +117,10 @@ export default function PersonTypeScreen() {
     ]);
   };
 
-  const filteredTypes = types.filter((t) =>
-    t.PersonTypeName?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredTypes = types.filter((t) => {
+    const name = t.Name || t.PersonTypeName || '';
+    return name.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
     <View style={styles.container}>
@@ -128,31 +133,36 @@ export default function PersonTypeScreen() {
           data={filteredTypes}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ paddingBottom: 80 }}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.iconBox}>
-                  <UserCheck color={colors.dark.accent} size={20} />
+          renderItem={({ item }) => {
+            const name = item.Name || item.PersonTypeName || 'Person Type';
+            const wage = item.DailyRate !== undefined ? item.DailyRate : item.DefaultWage || 0;
+
+            return (
+              <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.iconBox}>
+                    <UserCheck color={colors.dark.accent} size={20} />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text style={styles.typeName}>{name}</Text>
+                    {item.Description ? (
+                      <Text style={styles.typeDesc}>{item.Description}</Text>
+                    ) : null}
+                  </View>
+                  <View style={{ alignItems: 'flex-end', marginRight: 12 }}>
+                    <Text style={styles.wageLabel}>Default Wage</Text>
+                    <Text style={styles.wageValue}>₹{Number(wage).toLocaleString('en-IN')}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => openEditModal(item)} style={{ padding: 4, marginRight: 6 }}>
+                    <Edit2 color={colors.dark.textSecondary} size={18} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDelete(item)} style={{ padding: 4 }}>
+                    <Trash2 color={colors.dark.error} size={18} />
+                  </TouchableOpacity>
                 </View>
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.typeName}>{item.PersonTypeName}</Text>
-                  {item.Description ? (
-                    <Text style={styles.typeDesc}>{item.Description}</Text>
-                  ) : null}
-                </View>
-                <View style={{ alignItems: 'flex-end', marginRight: 12 }}>
-                  <Text style={styles.wageLabel}>Default Wage</Text>
-                  <Text style={styles.wageValue}>₹{(item.DefaultWage || 0).toLocaleString('en-IN')}</Text>
-                </View>
-                <TouchableOpacity onPress={() => openEditModal(item)} style={{ padding: 4, marginRight: 6 }}>
-                  <Edit2 color={colors.dark.textSecondary} size={18} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDelete(item)} style={{ padding: 4 }}>
-                  <Trash2 color={colors.dark.error} size={18} />
-                </TouchableOpacity>
               </View>
-            </View>
-          )}
+            );
+          }}
         />
       )}
 
