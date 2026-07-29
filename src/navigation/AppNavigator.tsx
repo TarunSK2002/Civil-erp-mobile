@@ -7,7 +7,7 @@ import LoginScreen from '../auth/LoginScreen';
 import DashboardScreen from '../screens/dashboard/DashboardScreen';
 import { colors } from '../theme/colors';
 import { View, ActivityIndicator } from 'react-native';
-import { LayoutDashboard, Users, Home, HardHat, DollarSign } from 'lucide-react-native';
+import { LayoutDashboard, Users, Home, HardHat, DollarSign, MoreHorizontal } from 'lucide-react-native';
 
 import SiteListScreen from '../screens/sites/SiteListScreen';
 import SiteDetailScreen from '../screens/sites/SiteDetailScreen';
@@ -17,6 +17,15 @@ import LabourListScreen from '../screens/labour/LabourListScreen';
 import WeeklyPayListScreen from '../screens/weekly-pay/WeeklyPayListScreen';
 import WeeklyPayDetailScreen from '../screens/weekly-pay/WeeklyPayDetailScreen';
 import PaymentListScreen from '../screens/payments/PaymentListScreen';
+
+// Phase 3 Modules
+import DealerListScreen from '../screens/materials/DealerListScreen';
+import PurchaseListScreen from '../screens/materials/PurchaseListScreen';
+import PurchaseFormScreen from '../screens/materials/PurchaseFormScreen';
+import PersonTypeScreen from '../screens/masters/PersonTypeScreen';
+import ShiftMasterScreen from '../screens/masters/ShiftMasterScreen';
+import PettyCashScreen from '../screens/expenses/PettyCashScreen';
+import MoreMenuScreen from '../screens/more/MoreMenuScreen';
 
 // ──── Sites Stack ────────────────────────────────────────────────────────────
 
@@ -85,7 +94,59 @@ function FinanceStackNavigator() {
         component={PaymentListScreen}
         options={{ title: 'Payments' }}
       />
+      <FinanceStack.Screen
+        name="PettyCash"
+        component={PettyCashScreen}
+        options={{ title: 'Petty Cash & Expenses' }}
+      />
+      <FinanceStack.Screen
+        name="PurchaseList"
+        component={PurchaseListScreen}
+        options={{ title: 'Material Purchases' }}
+      />
+      <FinanceStack.Screen
+        name="PurchaseForm"
+        component={PurchaseFormScreen}
+        options={{ title: 'New Material Purchase' }}
+      />
     </FinanceStack.Navigator>
+  );
+}
+
+// ──── More Stack ─────────────────────────────────────────────────────────────
+
+const MoreStack = createNativeStackNavigator();
+function MoreStackNavigator() {
+  return (
+    <MoreStack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.dark.bgSecondary },
+        headerTintColor: colors.dark.textPrimary,
+        headerTitleStyle: { fontWeight: '600' },
+        headerShadowVisible: false,
+      }}
+    >
+      <MoreStack.Screen
+        name="MoreMenu"
+        component={MoreMenuScreen}
+        options={{ title: 'More Modules' }}
+      />
+      <MoreStack.Screen
+        name="DealerList"
+        component={DealerListScreen}
+        options={{ title: 'Material Dealers' }}
+      />
+      <MoreStack.Screen
+        name="PersonType"
+        component={PersonTypeScreen}
+        options={{ title: 'Person Types (Wage Rates)' }}
+      />
+      <MoreStack.Screen
+        name="ShiftMaster"
+        component={ShiftMasterScreen}
+        options={{ title: 'Shift Master' }}
+      />
+    </MoreStack.Navigator>
   );
 }
 
@@ -120,6 +181,7 @@ function TabNavigator() {
           if (route.name === 'Labour') return <HardHat color={color} size={size} />;
           if (route.name === 'Clients') return <Users color={color} size={size} />;
           if (route.name === 'Finance') return <DollarSign color={color} size={size} />;
+          if (route.name === 'More') return <MoreHorizontal color={color} size={size} />;
           return null;
         },
       })}
@@ -129,6 +191,7 @@ function TabNavigator() {
       <Tab.Screen name="Labour" component={LabourStackNavigator} options={{ headerShown: false }} />
       <Tab.Screen name="Clients" component={ClientListScreen} />
       <Tab.Screen name="Finance" component={FinanceStackNavigator} options={{ headerShown: false }} />
+      <Tab.Screen name="More" component={MoreStackNavigator} options={{ headerShown: false }} />
     </Tab.Navigator>
   );
 }
