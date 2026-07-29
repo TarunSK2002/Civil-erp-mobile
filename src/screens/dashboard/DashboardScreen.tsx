@@ -15,8 +15,12 @@ import {
   ChevronRight,
   ClipboardList,
   HardHat,
-  Package,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Store,
+  ShoppingBag,
+  UserCheck,
+  Clock,
+  Wallet
 } from 'lucide-react-native';
 
 export default function DashboardScreen() {
@@ -74,6 +78,39 @@ export default function DashboardScreen() {
     month: 'long',
     year: 'numeric',
   });
+
+  const moduleCards = [
+    {
+      title: 'Material Dealers',
+      subtitle: 'Supplier directory & contact details',
+      icon: Store,
+      screen: 'DealerList',
+    },
+    {
+      title: 'Material Purchases',
+      subtitle: 'Site purchase entries & SqFt billing',
+      icon: ShoppingBag,
+      screen: 'PurchaseList',
+    },
+    {
+      title: 'Person Types (Wage Rates)',
+      subtitle: 'Mason, Helper, Painter wage settings',
+      icon: UserCheck,
+      screen: 'PersonType',
+    },
+    {
+      title: 'Shift Master',
+      subtitle: 'Full day, half day wage multipliers',
+      icon: Clock,
+      screen: 'ShiftMaster',
+    },
+    {
+      title: 'Petty Cash & Expenses',
+      subtitle: 'Track office & site cash expenses',
+      icon: Wallet,
+      screen: 'PettyCash',
+    },
+  ];
 
   return (
     <ScrollView
@@ -160,6 +197,30 @@ export default function DashboardScreen() {
         </Pressable>
       </View>
 
+      {/* Additional Modules Cards */}
+      <Text style={styles.sectionTitle}>Secondary & Master Modules</Text>
+      <View style={styles.moduleCardList}>
+        {moduleCards.map((item, idx) => {
+          const IconComponent = item.icon;
+          return (
+            <Pressable
+              key={idx}
+              style={styles.moduleCard}
+              onPress={() => navigation.navigate(item.screen)}
+            >
+              <View style={styles.moduleIconBox}>
+                <IconComponent color={colors.dark.accent} size={22} />
+              </View>
+              <View style={{ flex: 1, marginLeft: 14 }}>
+                <Text style={styles.moduleTitle}>{item.title}</Text>
+                <Text style={styles.moduleSubtitle}>{item.subtitle}</Text>
+              </View>
+              <ChevronRight color={colors.dark.textMuted} size={20} />
+            </Pressable>
+          );
+        })}
+      </View>
+
       {/* Overview Site Detail progress summary */}
       <Text style={styles.sectionTitle}>Sites Progress</Text>
       <View style={styles.progressCard}>
@@ -201,7 +262,7 @@ const styles = StyleSheet.create({
   errorContainer: {
     flex: 1,
     backgroundColor: colors.dark.bgPrimary,
-    justifyContent: 'center',
+    justify.content: 'center',
     alignItems: 'center',
     padding: 20,
   },
@@ -255,53 +316,83 @@ const styles = StyleSheet.create({
   },
   statsScroll: {
     marginHorizontal: -20,
-    marginBottom: 28,
+    marginBottom: 24,
   },
   statsScrollContent: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 20,
   },
   sectionTitle: {
     color: colors.dark.textPrimary,
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 16,
+    marginTop: 8,
   },
   actionGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 28,
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   actionItem: {
-    backgroundColor: colors.dark.bgCard,
+    width: '48%',
+    backgroundColor: colors.dark.bgSecondary,
     borderWidth: 1,
     borderColor: colors.dark.border,
     borderRadius: 12,
-    width: '48%',
-    flexDirection: 'row',
+    padding: 16,
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    marginBottom: 16,
   },
   actionIconWrapper: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     justifyContent: 'center',
-    marginRight: 10,
+    alignItems: 'center',
+    marginBottom: 10,
   },
   actionLabel: {
     color: colors.dark.textPrimary,
     fontSize: 13,
     fontWeight: '600',
-    flexShrink: 1,
   },
-  progressCard: {
-    backgroundColor: colors.dark.bgCard,
+  moduleCardList: {
+    marginBottom: 16,
+  },
+  moduleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.dark.bgSecondary,
+    padding: 16,
+    borderRadius: 14,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.dark.border,
-    borderRadius: 16,
+  },
+  moduleIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,179,0,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moduleTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.dark.textPrimary,
+  },
+  moduleSubtitle: {
+    fontSize: 12,
+    color: colors.dark.textSecondary,
+    marginTop: 2,
+  },
+  progressCard: {
+    backgroundColor: colors.dark.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.dark.border,
+    borderRadius: 12,
     padding: 20,
   },
   progressRow: {
@@ -313,7 +404,6 @@ const styles = StyleSheet.create({
   progressLabel: {
     color: colors.dark.textSecondary,
     fontSize: 13,
-    fontWeight: '500',
   },
   progressCount: {
     color: colors.dark.textPrimary,
@@ -321,7 +411,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   progressBarBg: {
-    width: '100%',
     height: 6,
     backgroundColor: colors.dark.bgInput,
     borderRadius: 3,
