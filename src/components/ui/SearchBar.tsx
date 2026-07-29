@@ -24,6 +24,8 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search...' }: Se
   );
 }
 
+export default SearchBar;
+
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
