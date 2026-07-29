@@ -35,6 +35,7 @@ export default function PurchaseFormScreen({ navigation }: any) {
   const [quantity, setQuantity] = useState('');
   const [unit, setUnit] = useState('nos');
   const [dealerName, setDealerName] = useState('');
+  const [billNo, setBillNo] = useState('');
   const [ratePerUnit, setRatePerUnit] = useState('');
   const [amount, setAmount] = useState('');
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
@@ -58,20 +59,25 @@ export default function PurchaseFormScreen({ navigation }: any) {
   const [siteSearch, setSiteSearch] = useState('');
   const [materialModalOpen, setMaterialModalOpen] = useState(false);
   const [materialSearch, setMaterialSearch] = useState('');
+  const [dealerModalOpen, setDealerModalOpen] = useState(false);
+  const [dealerSearch, setDealerSearch] = useState('');
   const [unitModalOpen, setUnitModalOpen] = useState(false);
+  const [dealersList, setDealersList] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadDropdowns() {
       try {
-        const [sitesRes, typesRes] = await Promise.all([
+        const [sitesRes, typesRes, dealersRes] = await Promise.all([
           api.get('/sites'),
           api.get('/material-types'),
+          api.get('/materials'),
         ]);
         setSites(sitesRes.data || []);
         setMaterialTypes(typesRes.data || []);
+        setDealersList(dealersRes.data || []);
         if (sitesRes.data?.length > 0) setSiteId(sitesRes.data[0].Id || sitesRes.data[0].id);
       } catch (err: any) {
-        Alert.alert('Error', 'Failed to load sites and material types');
+        Alert.alert('Error', 'Failed to load dropdown data');
       } finally {
         setLoadingDropdowns(false);
       }
@@ -133,6 +139,10 @@ export default function PurchaseFormScreen({ navigation }: any) {
     (m.Name || '').toLowerCase().includes(materialSearch.toLowerCase())
   );
 
+  const filteredDealers = dealersList.filter(d =>
+    (d.Name || '').toLowerCase().includes(dealerSearch.toLowerCase())
+  );
+
   const handleSubmit = async () => {
     if (!siteId || !materialId) {
       Alert.alert('Validation Error', 'Please select a Site and Material');
@@ -153,6 +163,7 @@ export default function PurchaseFormScreen({ navigation }: any) {
         Unit: unit,
         Amount: tot,
         DealerName: dealerName.trim(),
+        BillNo: billNo.trim(),
         PurchaseDate: purchaseDate || new Date().toISOString().split('T')[0],
         Length: length ? parseFloat(length) : null,
         Breadth: breadth ? parseFloat(breadth) : null,
@@ -309,13 +320,18 @@ export default function PurchaseFormScreen({ navigation }: any) {
         <View style={styles.row}>
           <View style={{ flex: 0.48 }}>
             <Text style={styles.label}>Dealer / Vendor *</Text>
-            <TextInput
-              style={styles.input}
-              value={dealerName}
-              onChangeText={setDealerName}
-              placeholder="Enter dealer name"
-              placeholderTextColor={colors.dark.textMuted}
-            />
+            <TouchableOpacity
+              style={styles.dropdownSelector}
+              onPress={() => {
+                setDealerSearch('');
+                setDealerModalOpen(true);
+              }}
+            >
+              <Text style={styles.dropdownSelectorText} numberOfLines={1}>
+                {dealerName || 'Select Dealer'}
+              </Text>
+              <ChevronDown color={colors.dark.textSecondary} size={20} />
+            </TouchableOpacity>
           </View>
           <View style={{ flex: 0.48 }}>
             <Text style={styles.label}>
@@ -332,7 +348,7 @@ export default function PurchaseFormScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* Total Amount & Purchase Date */}
+        {/* Total Amount, Bill No & Purchase Date */}
         <View style={styles.row}>
           <View style={{ flex: 0.48 }}>
             <Text style={styles.label}>Total Amount (₹) *</Text>
@@ -346,16 +362,25 @@ export default function PurchaseFormScreen({ navigation }: any) {
             />
           </View>
           <View style={{ flex: 0.48 }}>
-            <Text style={styles.label}>Purchase Date *</Text>
+            <Text style={styles.label}>Bill / Invoice #</Text>
             <TextInput
               style={styles.input}
-              value={purchaseDate}
-              onChangeText={setPurchaseDate}
-              placeholder="YYYY-MM-DD"
+              value={billNo}
+              onChangeText={setBillNo}
+              placeholder="e.g. INV-102"
               placeholderTextColor={colors.dark.textMuted}
             />
           </View>
         </View>
+
+        <Text style={styles.label}>Purchase Date *</Text>
+        <TextInput
+          style={styles.input}
+          value={purchaseDate}
+          onChangeText={setPurchaseDate}
+          placeholder="YYYY-MM-DD"
+          placeholderTextColor={colors.dark.textMuted}
+        />
 
         {/* Action Button */}
         <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting}>
@@ -472,7 +497,71 @@ export default function PurchaseFormScreen({ navigation }: any) {
         </View>
       </Modal>
 
-      {/* 3. Unit Selector Modal */}
+      {/* 3. Searchable Dealer Modal */}
+      <Modal visible={dealerModalOpen} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Dealer / Vendor</Text>
+              <TouchableOpacity onPress={() => setDealerModalOpen(false)}>
+                <X color={colors.dark.textPrimary} size={24} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.searchBox}>
+              <Search color={colors.dark.textMuted} size={18} style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.searchInput}
+                value={dealerSearch}
+                onChangeText={setDealerSearch}
+                placeholder="Search or enter dealer name..."
+                placeholderTextColor={colors.dark.textMuted}
+              />
+            </View>
+            <FlatList
+              data={filteredDealers}
+              keyExtractor={(item) => item.id.toString()}
+              style={{ maxHeight: 300 }}
+              renderItem={({ item }) => {
+                const isSelected = dealerName === item.Name;
+                return (
+                  <TouchableOpacity
+                    style={[styles.listItem, isSelected && styles.listItemActive]}
+                    onPress={() => {
+                      setDealerName(item.Name || '');
+                      setDealerModalOpen(false);
+                    }}
+                  >
+                    <View>
+                      <Text style={[styles.listItemText, isSelected && styles.listItemTextActive]}>
+                        {item.Name}
+                      </Text>
+                      {item.Phone ? (
+                        <Text style={styles.listItemSub}>{item.Phone}</Text>
+                      ) : null}
+                    </View>
+                    {isSelected && <Check color={colors.dark.accent} size={18} />}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+            {dealerSearch.trim().length > 0 && !filteredDealers.some(d => d.Name?.toLowerCase() === dealerSearch.trim().toLowerCase()) && (
+              <TouchableOpacity
+                style={[styles.listItem, { backgroundColor: 'rgba(255,179,0,0.12)', marginTop: 8, borderRadius: 8 }]}
+                onPress={() => {
+                  setDealerName(dealerSearch.trim());
+                  setDealerModalOpen(false);
+                }}
+              >
+                <Text style={[styles.listItemText, { color: colors.dark.accent, fontWeight: 'bold' }]}>
+                  + Add "{dealerSearch.trim()}" as custom dealer
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* 4. Unit Selector Modal */}
       <Modal visible={unitModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
