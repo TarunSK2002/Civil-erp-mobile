@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 10.0.0"
+    "version": ">= 10.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -9,11 +10,13 @@
     },
     "preview": {
       "distribution": "internal",
+      "npmCommand": "npm install --legacy-peer-deps",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "npmCommand": "npm install --legacy-peer-deps",
       "android": {
         "buildType": "apk"
       }
