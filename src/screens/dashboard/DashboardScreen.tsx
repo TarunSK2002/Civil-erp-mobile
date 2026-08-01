@@ -154,6 +154,7 @@ export default function DashboardScreen() {
       screen: 'UserManagement',
       bgColor: 'rgba(244, 63, 94, 0.12)',
       iconColor: '#f43f5e',
+      adminOnly: true,
     },
     {
       title: 'Petty Cash',
@@ -162,7 +163,7 @@ export default function DashboardScreen() {
       bgColor: 'rgba(236, 72, 153, 0.12)',
       iconColor: '#ec4899',
     },
-  ];
+  ].filter(card => !card.adminOnly || user?.role === 'ADMIN');
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
