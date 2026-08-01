@@ -2,11 +2,148 @@ import React, { useState } from 'react';
 import { StyleSheet, View, Text, TextInput, Pressable, FlatList, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../../api/client';
+import { colors } from '../../theme/colors';
+import { typography } from '../../theme/typography';
+import { Search, Plus, MapPin, Edit2, Trash2, X, Eye, Home, ChevronDown, Check } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-// ... rest of imports ...
+interface Site {
+  id: number;
+  SiteName: string;
+  ClientId: number;
+  SiteValue: number;
+  Length: string;
+  Breadth: string;
+  Facing: string;
+  Status: string;
+  Progress: number;
+  NextMilestone: string;
+  Client?: {
+    Name: string;
+  };
+}
+
+interface Client {
+  id: number;
+  Name: string;
+}
 
 export default function SiteListScreen() {
-  // ... rest of state and logic ...
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
+  const [editingSite, setEditingSite] = useState<Site | null>(null);
+
+  // Form State
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const [siteName, setSiteName] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [siteValue, setSiteValue] = useState('');
+  const [length, setLength] = useState('');
+  const [breadth, setBreadth] = useState('');
+  const [facing, setFacing] = useState('');
+  const [status, setStatus] = useState('Upcoming');
+
+  // React Query Fetch Sites & Clients
+  const { data: sites, isLoading, refetch, isFetching } = useQuery<Site[]>({
+    queryKey: ['sites', search, statusFilter],
+    queryFn: async () => {
+      const response = await api.request({
+        method: 'POST',
+        url: '/sites',
+        data: { search, status: statusFilter }
+      });
+      return response.data;
+    },
+  });
+
+  const { data: clients } = useQuery<Client[]>({
+    queryKey: ['clients-dropdown'],
+    queryFn: async () => {
+      const response = await api.get('/clients');
+      return response.data;
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        SiteName: siteName,
+        ClientId: parseInt(clientId),
+        SiteValue: parseFloat(siteValue),
+        Length: length,
+        Breadth: breadth,
+        Facing: facing,
+        Status: status,
+      };
+      if (editingSite) {
+        return api.put(`/sites/${editingSite.id}`, payload);
+      }
+      return api.post('/sites', payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sites'] });
+      closeForm();
+    },
+    onError: (err: any) => {
+      Alert.alert('Error', err.response?.data?.msg || 'Failed to save site');
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return api.delete(`/sites/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sites'] });
+    },
+    onError: (err: any) => {
+      Alert.alert('Error', err.response?.data?.msg || 'Failed to delete site');
+    }
+  });
+
+  const handleOpenForm = (site?: Site) => {
+    if (site) {
+      setEditingSite(site);
+      setSiteName(site.SiteName);
+      setClientId(site.ClientId.toString());
+      setSiteValue(site.SiteValue.toString());
+      setLength(site.Length);
+      setBreadth(site.Breadth);
+      setFacing(site.Facing);
+      setStatus(site.Status);
+    } else {
+      setEditingSite(null);
+      setSiteName('');
+      setClientId(clients && clients.length > 0 ? clients[0].id.toString() : '');
+      setSiteValue('');
+      setLength('');
+      setBreadth('');
+      setFacing('');
+      setStatus('Upcoming');
+    }
+    setBottomSheetOpen(true);
+  };
+
+  const closeForm = () => {
+    setBottomSheetOpen(false);
+    setEditingSite(null);
+  };
+
+  const handleDelete = (site: Site) => {
+    Alert.alert(
+      'Confirm Delete',
+      `Are you sure you want to delete ${site.SiteName}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => deleteMutation.mutate(site.id) }
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>

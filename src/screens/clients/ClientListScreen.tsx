@@ -2,11 +2,118 @@ import React, { useState } from 'react';
 import { StyleSheet, View, Text, TextInput, Pressable, FlatList, ActivityIndicator, Alert, Linking, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../../api/client';
+import { colors } from '../../theme/colors';
+import { typography } from '../../theme/typography';
+import { Search, Plus, Phone, MessageCircle, Edit2, Trash2, X, RefreshCw } from 'lucide-react-native';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
-// ... rest of imports ...
+interface Client {
+  id: number;
+  Name: string;
+  MobileNumber: string;
+  PaymentType: string;
+}
 
 export default function ClientListScreen() {
-  // ... rest of state and logic ...
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState('');
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
+  
+  // Form State
+  const [name, setName] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [paymentType, setPaymentType] = useState('Cash');
+
+  // React Query Fetch Clients
+  const { data: clients, isLoading, refetch, isFetching } = useQuery<Client[]>({
+    queryKey: ['clients', search],
+    queryFn: async () => {
+      const response = await api.get(`/clients?search=${search}`);
+      return response.data;
+    },
+  });
+
+  // Client Mutations
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const payload = { Name: name, MobileNumber: mobileNumber, PaymentType: paymentType };
+      if (selectedClient) {
+        return api.put(`/clients/${selectedClient.id}`, payload);
+      }
+      return api.post('/clients', payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      closeForm();
+    },
+    onError: (err: any) => {
+      Alert.alert('Error', err.response?.data?.msg || 'Failed to save client');
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return api.delete(`/clients/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
+    onError: (err: any) => {
+      Alert.alert('Error', err.response?.data?.msg || 'Failed to delete client');
+    }
+  });
+
+  const handleOpenForm = (client?: Client) => {
+    if (client) {
+      setSelectedClient(client);
+      setName(client.Name);
+      setMobileNumber(client.MobileNumber);
+      setPaymentType(client.PaymentType);
+    } else {
+      setSelectedClient(null);
+      setName('');
+      setMobileNumber('');
+      setPaymentType('Cash');
+    }
+    setBottomSheetOpen(true);
+  };
+
+  const closeForm = () => {
+    setBottomSheetOpen(false);
+    setSelectedClient(null);
+    setName('');
+    setMobileNumber('');
+    setPaymentType('Cash');
+  };
+
+  const handleDelete = (client: Client) => {
+    Alert.alert(
+      'Confirm Delete',
+      `Are you sure you want to delete ${client.Name}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => deleteMutation.mutate(client.id) }
+      ]
+    );
+  };
+
+  const handleWhatsApp = (phone: string) => {
+    const formattedPhone = phone.replace(/[^0-9]/g, '');
+    const url = `whatsapp://send?phone=91${formattedPhone}`;
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'WhatsApp is not installed on this device');
+      }
+    });
+  };
+
+  const handleCall = (phone: string) => {
+    Linking.openURL(`tel:${phone}`);
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
