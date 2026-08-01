@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
-import api from '../api/client';
-import { colors } from '../theme/colors';
+import api from '../../api/client';
+import { colors } from '../../theme/colors';
 import {
   BarChart3,
   Home,
