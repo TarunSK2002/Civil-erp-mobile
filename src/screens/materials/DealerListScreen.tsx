@@ -11,10 +11,12 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { SearchBar } from '../../components/ui/SearchBar';
 import { colors } from '../../theme/colors';
 import api from '../../api/client';
-import { Store, Plus, Phone, MapPin, X, Trash2, Edit2 } from 'lucide-react-native';
+import { Store, Plus, Phone, MapPin, X, Trash2, Edit2, Layers } from 'lucide-react-native';
 
 interface Dealer {
   id: number;
@@ -31,6 +33,7 @@ interface MaterialType {
 }
 
 export default function DealerListScreen() {
+  const navigation = useNavigation<any>();
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [materialTypes, setMaterialTypes] = useState<MaterialType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,7 +141,22 @@ export default function DealerListScreen() {
   });
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      {/* Top Header & Navigation bar to Material Types */}
+      <View style={styles.headerBar}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerTitle}>Material Dealers</Text>
+          <Text style={styles.headerSubtitle}>Manage dealers and material categories</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.navTypeBtn}
+          onPress={() => navigation.navigate('MaterialTypeMaster')}
+        >
+          <Layers color={colors.dark.accent} size={18} style={{ marginRight: 6 }} />
+          <Text style={styles.navTypeBtnText}>Material Types</Text>
+        </TouchableOpacity>
+      </View>
+
       <SearchBar value={search} onChangeText={setSearch} placeholder="Search dealers..." />
 
       {/* Filter Bar */}
@@ -276,7 +294,7 @@ export default function DealerListScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -285,6 +303,37 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.dark.bgPrimary,
     padding: 16,
+  },
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.dark.textPrimary,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: colors.dark.textMuted,
+    marginTop: 2,
+  },
+  navTypeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.dark.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.dark.accent,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  navTypeBtnText: {
+    color: colors.dark.accent,
+    fontSize: 12,
+    fontWeight: '600',
   },
   filterScroll: {
     maxHeight: 40,
