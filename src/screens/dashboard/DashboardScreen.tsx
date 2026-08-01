@@ -25,11 +25,12 @@ import {
   Shield,
   FileText,
   MapPin,
-  FileSpreadsheet
+  FileSpreadsheet,
+  LogOut
 } from 'lucide-react-native';
 
 export default function DashboardScreen() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigation = useNavigation<any>();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -183,9 +184,19 @@ export default function DashboardScreen() {
             <Text style={styles.greeting}>Hello, {user?.fullName || 'Admin'}</Text>
             <Text style={styles.subtitle}>Here is your summary for today</Text>
           </View>
-          <View style={styles.dateBadge}>
-            <Calendar size={14} color={colors.dark.textSecondary} style={{ marginRight: 6 }} />
-            <Text style={styles.dateText}>{currentDate}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={styles.dateBadge}>
+              <Calendar size={14} color={colors.dark.textSecondary} style={{ marginRight: 6 }} />
+              <Text style={styles.dateText}>{currentDate}</Text>
+            </View>
+            <Pressable
+              style={styles.logoutBadge}
+              onPress={() => {
+                logout();
+              }}
+            >
+              <LogOut size={16} color={colors.dark.error} />
+            </Pressable>
           </View>
         </View>
 
@@ -375,6 +386,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 6,
     paddingHorizontal: 12,
+  },
+  logoutBadge: {
+    backgroundColor: 'rgba(244, 67, 54, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(244, 67, 54, 0.3)',
+    borderRadius: 8,
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dateText: {
     color: colors.dark.textSecondary,
