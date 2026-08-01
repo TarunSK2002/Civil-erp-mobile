@@ -27,6 +27,12 @@ import ShiftMasterScreen from '../screens/masters/ShiftMasterScreen';
 import MaterialTypeMasterScreen from '../screens/masters/MaterialTypeMasterScreen';
 import PettyCashScreen from '../screens/expenses/PettyCashScreen';
 
+// Phase 4 Reports & Admin Screens
+import ReportsScreen from '../screens/reports/ReportsScreen';
+import SiteReportScreen from '../screens/reports/SiteReportScreen';
+import LabourReportScreen from '../screens/reports/LabourReportScreen';
+import UserManagementScreen from '../screens/admin/UserManagementScreen';
+
 // ──── Home / Dashboard Stack ──────────────────────────────────────────────────
 
 const HomeStack = createNativeStackNavigator();
@@ -44,6 +50,26 @@ function HomeStackNavigator() {
         name="DashboardScreen"
         component={DashboardScreen}
         options={{ headerShown: false }}
+      />
+      <HomeStack.Screen
+        name="Reports"
+        component={ReportsScreen}
+        options={{ title: 'Financial & Site Reports' }}
+      />
+      <HomeStack.Screen
+        name="SiteReportDetail"
+        component={SiteReportScreen}
+        options={{ title: 'Site Report Summary' }}
+      />
+      <HomeStack.Screen
+        name="LabourReportDetail"
+        component={LabourReportScreen}
+        options={{ title: 'Labour Payment Report' }}
+      />
+      <HomeStack.Screen
+        name="UserManagement"
+        component={UserManagementScreen}
+        options={{ title: 'User Management' }}
       />
       <HomeStack.Screen
         name="DealerList"

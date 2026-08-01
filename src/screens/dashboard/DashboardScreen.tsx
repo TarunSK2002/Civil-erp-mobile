@@ -21,7 +21,9 @@ import {
   UserCheck,
   Clock,
   Wallet,
-  Layers
+  Layers,
+  BarChart3,
+  Shield
 } from 'lucide-react-native';
 
 export default function DashboardScreen() {
@@ -115,6 +117,20 @@ export default function DashboardScreen() {
       screen: 'MaterialTypeMaster',
       bgColor: 'rgba(6, 182, 212, 0.12)',
       iconColor: '#06b6d4',
+    },
+    {
+      title: 'Reports',
+      icon: BarChart3,
+      screen: 'Reports',
+      bgColor: 'rgba(99, 102, 241, 0.12)',
+      iconColor: '#6366f1',
+    },
+    {
+      title: 'Users',
+      icon: Shield,
+      screen: 'UserManagement',
+      bgColor: 'rgba(244, 63, 94, 0.12)',
+      iconColor: '#f43f5e',
     },
     {
       title: 'Petty Cash',
