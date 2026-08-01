@@ -15,7 +15,6 @@ import {
   Calendar, 
   ClipboardList,
   HardHat,
-  FileSpreadsheet,
   Store,
   ShoppingBag,
   UserCheck,
