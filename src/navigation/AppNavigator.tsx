@@ -221,6 +221,7 @@ function FinanceStackNavigator() {
 const Tab = createBottomTabNavigator();
 
 function TabNavigator() {
+  const { user } = useAuth();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -255,7 +256,9 @@ function TabNavigator() {
       <Tab.Screen name="Sites" component={SitesStackNavigator} options={{ headerShown: false }} />
       <Tab.Screen name="Labour" component={LabourStackNavigator} options={{ headerShown: false }} />
       <Tab.Screen name="Clients" component={ClientListScreen} />
-      <Tab.Screen name="Finance" component={FinanceStackNavigator} options={{ headerShown: false }} />
+      {user?.role === 'ADMIN' && (
+        <Tab.Screen name="Finance" component={FinanceStackNavigator} options={{ headerShown: false }} />
+      )}
     </Tab.Navigator>
   );
 }

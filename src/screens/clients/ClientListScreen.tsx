@@ -15,7 +15,10 @@ interface Client {
   PaymentType: string;
 }
 
+import { useAuth } from '../../auth/AuthContext';
+
 export default function ClientListScreen() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -157,21 +160,23 @@ export default function ClientListScreen() {
                 </View>
               </View>
 
-              {/* Dynamic Operations Shortcuts */}
-              <View style={styles.cardActions}>
-                <Pressable style={styles.iconButton} onPress={() => handleCall(item.MobileNumber)}>
-                  <Phone color={colors.dark.accent} size={18} />
-                </Pressable>
-                <Pressable style={styles.iconButton} onPress={() => handleWhatsApp(item.MobileNumber)}>
-                  <MessageCircle color="#25D366" size={18} />
-                </Pressable>
-                <Pressable style={styles.iconButton} onPress={() => handleOpenForm(item)}>
-                  <Edit2 color={colors.dark.textSecondary} size={18} />
-                </Pressable>
-                <Pressable style={styles.iconButton} onPress={() => handleDelete(item)}>
-                  <Trash2 color={colors.dark.error} size={18} />
-                </Pressable>
-              </View>
+              {/* Dynamic Operations Shortcuts - ADMIN Only */}
+              {user?.role === 'ADMIN' && (
+                <View style={styles.cardActions}>
+                  <Pressable style={styles.iconButton} onPress={() => handleCall(item.MobileNumber)}>
+                    <Phone color={colors.dark.accent} size={18} />
+                  </Pressable>
+                  <Pressable style={styles.iconButton} onPress={() => handleWhatsApp(item.MobileNumber)}>
+                    <MessageCircle color="#25D366" size={18} />
+                  </Pressable>
+                  <Pressable style={styles.iconButton} onPress={() => handleOpenForm(item)}>
+                    <Edit2 color={colors.dark.textSecondary} size={18} />
+                  </Pressable>
+                  <Pressable style={styles.iconButton} onPress={() => handleDelete(item)}>
+                    <Trash2 color={colors.dark.error} size={18} />
+                  </Pressable>
+                </View>
+              )}
             </View>
           )}
         />

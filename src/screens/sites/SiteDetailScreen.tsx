@@ -6,6 +6,7 @@ import api from '../../api/client';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { ArrowLeft, MapPin, Ruler, Compass, Plus, Trash2, Edit2, X, ChevronDown, Check } from 'lucide-react-native';
+import { useAuth } from '../../auth/AuthContext';
 
 interface Section {
   id: number;
@@ -30,6 +31,7 @@ interface Project {
 }
 
 export default function SiteDetailScreen() {
+  const { user } = useAuth();
   const route = useRoute<any>();
   const navigation = useNavigation();
   const queryClient = useQueryClient();
@@ -297,10 +299,13 @@ export default function SiteDetailScreen() {
           <View style={{ paddingBottom: 40 }}>
             {/* Financial Details Info */}
             <View style={styles.financialCard}>
-              <Text style={styles.cardTitle}>Site Valuation</Text>
-              <Text style={styles.valuationAmount}>₹{site?.SiteValue?.toLocaleString('en-IN')}</Text>
-              
-              <View style={styles.divider} />
+              {user?.role === 'ADMIN' && (
+                <>
+                  <Text style={styles.cardTitle}>Site Valuation</Text>
+                  <Text style={styles.valuationAmount}>₹{site?.SiteValue?.toLocaleString('en-IN')}</Text>
+                  <View style={styles.divider} />
+                </>
+              )}
               
               <View style={styles.specGrid}>
                 <View style={styles.specCol}>
@@ -315,19 +320,23 @@ export default function SiteDetailScreen() {
             </View>
 
             {/* Site statistics highlights */}
-            <Text style={styles.sectionTitle}>Recent Payments</Text>
-            {site?.RecentPayments && site.RecentPayments.length > 0 ? (
-              site.RecentPayments.map((pm: any) => (
-                <View key={pm.id} style={styles.paymentRow}>
-                  <View>
-                    <Text style={styles.paymentCategory}>{pm.PaymentCategory}</Text>
-                    <Text style={styles.paymentDate}>{new Date(pm.PaymentDate).toLocaleDateString('en-IN')}</Text>
-                  </View>
-                  <Text style={styles.paymentAmount}>- ₹{pm.Amount.toLocaleString('en-IN')}</Text>
-                </View>
-              ))
-            ) : (
-              <Text style={styles.noData}>No recent transactions</Text>
+            {user?.role === 'ADMIN' && (
+              <>
+                <Text style={styles.sectionTitle}>Recent Payments</Text>
+                {site?.RecentPayments && site.RecentPayments.length > 0 ? (
+                  site.RecentPayments.map((pm: any) => (
+                    <View key={pm.id} style={styles.paymentRow}>
+                      <View>
+                        <Text style={styles.paymentCategory}>{pm.PaymentCategory}</Text>
+                        <Text style={styles.paymentDate}>{new Date(pm.PaymentDate).toLocaleDateString('en-IN')}</Text>
+                      </View>
+                      <Text style={styles.paymentAmount}>- ₹{pm.Amount.toLocaleString('en-IN')}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.noData}>No recent transactions</Text>
+                )}
+              </>
             )}
           </View>
         )}

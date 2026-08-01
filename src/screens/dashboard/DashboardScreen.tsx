@@ -147,6 +147,7 @@ export default function DashboardScreen() {
       screen: 'Reports',
       bgColor: 'rgba(99, 102, 241, 0.12)',
       iconColor: '#6366f1',
+      adminOnly: true,
     },
     {
       title: 'Users',
@@ -162,6 +163,7 @@ export default function DashboardScreen() {
       screen: 'PettyCash',
       bgColor: 'rgba(236, 72, 153, 0.12)',
       iconColor: '#ec4899',
+      adminOnly: true,
     },
   ].filter(card => !card.adminOnly || user?.role === 'ADMIN');
 
@@ -205,18 +207,22 @@ export default function DashboardScreen() {
             icon={Home}
             color="#16a34a"
           />
-          <StatCard
-            title="Today's Payments"
-            value={`₹${(stats?.todayPayments || 0).toLocaleString('en-IN')}`}
-            icon={CreditCard}
-            color="#eab308"
-          />
-          <StatCard
-            title="Pending Payments"
-            value={`₹${(stats?.pendingPayments || 0).toLocaleString('en-IN')}`}
-            icon={AlertCircle}
-            color="#f43f5e"
-          />
+          {user?.role === 'ADMIN' && (
+            <>
+              <StatCard
+                title="Today's Payments"
+                value={`₹${(stats?.todayPayments || 0).toLocaleString('en-IN')}`}
+                icon={CreditCard}
+                color="#eab308"
+              />
+              <StatCard
+                title="Pending Payments"
+                value={`₹${(stats?.pendingPayments || 0).toLocaleString('en-IN')}`}
+                icon={AlertCircle}
+                color="#f43f5e"
+              />
+            </>
+          )}
         </ScrollView>
 
         {/* Quick Operations — 1 Row 4 Column compact grid */}
@@ -236,19 +242,28 @@ export default function DashboardScreen() {
             <Text style={styles.gridLabel} numberOfLines={1}>Labour List</Text>
           </Pressable>
 
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Labour', { screen: 'WeeklyPayList' })}>
-            <View style={[styles.gridIconBox, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
-              <FileSpreadsheet color="#8b5cf6" size={20} />
+          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('DPR')}>
+            <View style={[styles.gridIconBox, { backgroundColor: 'rgba(255, 179, 0, 0.12)' }]}>
+              <FileText color="#FFB300" size={20} />
             </View>
-            <Text style={styles.gridLabel} numberOfLines={1}>Pay Sheets</Text>
+            <Text style={styles.gridLabel} numberOfLines={1}>DPR Screen</Text>
           </Pressable>
 
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Finance', { screen: 'PaymentList' })}>
-            <View style={[styles.gridIconBox, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
-              <CreditCard color="#10b981" size={20} />
-            </View>
-            <Text style={styles.gridLabel} numberOfLines={1}>Payments</Text>
-          </Pressable>
+          {user?.role === 'ADMIN' ? (
+            <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Finance', { screen: 'PaymentList' })}>
+              <View style={[styles.gridIconBox, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+                <CreditCard color="#10b981" size={20} />
+              </View>
+              <Text style={styles.gridLabel} numberOfLines={1}>Payments</Text>
+            </Pressable>
+          ) : (
+            <Pressable style={styles.gridCard} onPress={() => navigation.navigate('GpsAttendance')}>
+              <View style={[styles.gridIconBox, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+                <MapPin color="#10b981" size={20} />
+              </View>
+              <Text style={styles.gridLabel} numberOfLines={1}>GPS Check-in</Text>
+            </Pressable>
+          )}
         </View>
 
         {/* Secondary & Master Modules — Square Grid Cards */}

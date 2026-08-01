@@ -8,6 +8,7 @@ import { typography } from '../../theme/typography';
 import { Search, Plus, MapPin, Edit2, Trash2, X, Eye, Home, ChevronDown, Check } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useAuth } from '../../auth/AuthContext';
 
 interface Site {
   id: number;
@@ -31,6 +32,7 @@ interface Client {
 }
 
 export default function SiteListScreen() {
+  const { user } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
@@ -47,6 +49,7 @@ export default function SiteListScreen() {
   const [breadth, setBreadth] = useState('');
   const [facing, setFacing] = useState('');
   const [status, setStatus] = useState('Upcoming');
+  const [editReason, setEditReason] = useState('');
 
   // React Query Fetch Sites & Clients
   const { data: sites, isLoading, refetch, isFetching } = useQuery<Site[]>({
@@ -71,15 +74,23 @@ export default function SiteListScreen() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const payload = {
+      const payload: any = {
         SiteName: siteName,
         ClientId: parseInt(clientId),
-        SiteValue: parseFloat(siteValue),
         Length: length,
         Breadth: breadth,
         Facing: facing,
         Status: status,
       };
+      if (user?.role === 'ADMIN' && siteValue) {
+        payload.SiteValue = parseFloat(siteValue);
+      }
+      if (editingSite && user?.role === 'EMP') {
+        if (!editReason.trim()) {
+          throw new Error('Please enter a reason for editing this site.');
+        }
+        payload.EditReason = editReason;
+      }
       if (editingSite) {
         return api.put(`/sites/${editingSite.id}`, payload);
       }
@@ -90,7 +101,7 @@ export default function SiteListScreen() {
       closeForm();
     },
     onError: (err: any) => {
-      Alert.alert('Error', err.response?.data?.msg || 'Failed to save site');
+      Alert.alert('Error', err.message || err.response?.data?.msg || 'Failed to save site');
     }
   });
 
@@ -108,14 +119,29 @@ export default function SiteListScreen() {
 
   const handleOpenForm = (site?: Site) => {
     if (site) {
-      setEditingSite(site);
-      setSiteName(site.SiteName);
-      setClientId(site.ClientId.toString());
-      setSiteValue(site.SiteValue.toString());
-      setLength(site.Length);
-      setBreadth(site.Breadth);
-      setFacing(site.Facing);
-      setStatus(site.Status);
+      if (user?.role === 'EMP') {
+        Alert.prompt(
+          'Reason for Edit Required',
+          'As an Employee, please log the reason why you are modifying this site data:',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Proceed',
+              onPress: (reason) => {
+                if (!reason || !reason.trim()) {
+                  Alert.alert('Edit Blocked', 'You must specify a reason for editing.');
+                  return;
+                }
+                setEditReason(reason);
+                openModalWithSite(site);
+              }
+            }
+          ],
+          'plain-text'
+        );
+        return;
+      }
+      openModalWithSite(site);
     } else {
       setEditingSite(null);
       setSiteName('');
@@ -125,16 +151,34 @@ export default function SiteListScreen() {
       setBreadth('');
       setFacing('');
       setStatus('Upcoming');
+      setEditReason('');
+      setBottomSheetOpen(true);
     }
+  };
+
+  const openModalWithSite = (site: Site) => {
+    setEditingSite(site);
+    setSiteName(site.SiteName);
+    setClientId(site.ClientId.toString());
+    setSiteValue(site.SiteValue ? site.SiteValue.toString() : '');
+    setLength(site.Length);
+    setBreadth(site.Breadth);
+    setFacing(site.Facing);
+    setStatus(site.Status);
     setBottomSheetOpen(true);
   };
 
   const closeForm = () => {
     setBottomSheetOpen(false);
     setEditingSite(null);
+    setEditReason('');
   };
 
   const handleDelete = (site: Site) => {
+    if (user?.role === 'EMP') {
+      Alert.alert('Access Denied', 'Employees are not allowed to delete sites.');
+      return;
+    }
     Alert.alert(
       'Confirm Delete',
       `Are you sure you want to delete ${site.SiteName}?`,
@@ -218,7 +262,9 @@ export default function SiteListScreen() {
                   <MapPin color={colors.dark.textSecondary} size={14} style={{ marginRight: 4 }} />
                   <Text style={styles.metaText}>{item.Facing} Facing</Text>
                 </View>
-                <Text style={styles.siteValueText}>₹{item.SiteValue.toLocaleString('en-IN')}</Text>
+                {user?.role === 'ADMIN' && (
+                  <Text style={styles.siteValueText}>₹{item.SiteValue?.toLocaleString('en-IN')}</Text>
+                )}
               </View>
 
               {/* Action buttons */}
@@ -234,9 +280,11 @@ export default function SiteListScreen() {
                   <Pressable style={styles.iconBtn} onPress={() => handleOpenForm(item)}>
                     <Edit2 color={colors.dark.textSecondary} size={16} />
                   </Pressable>
-                  <Pressable style={styles.iconBtn} onPress={() => handleDelete(item)}>
-                    <Trash2 color={colors.dark.error} size={16} />
-                  </Pressable>
+                  {user?.role === 'ADMIN' && (
+                    <Pressable style={styles.iconBtn} onPress={() => handleDelete(item)}>
+                      <Trash2 color={colors.dark.error} size={16} />
+                    </Pressable>
+                  )}
                 </View>
               </View>
             </Pressable>
@@ -271,17 +319,19 @@ export default function SiteListScreen() {
               />
             </View>
 
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Site Value (₹)</Text>
-              <TextInput
-                style={styles.input}
-                value={siteValue}
-                onChangeText={setSiteValue}
-                placeholder="Quoted Budget Value"
-                placeholderTextColor={colors.dark.textMuted}
-                keyboardType="numeric"
-              />
-            </View>
+            {user?.role === 'ADMIN' && (
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Site Value (₹)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={siteValue}
+                  onChangeText={setSiteValue}
+                  placeholder="Quoted Budget Value"
+                  placeholderTextColor={colors.dark.textMuted}
+                  keyboardType="numeric"
+                />
+              </View>
+            )}
 
             <View style={styles.dimensionRow}>
               <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
