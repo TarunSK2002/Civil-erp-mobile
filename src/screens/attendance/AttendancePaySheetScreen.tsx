@@ -41,11 +41,20 @@ export default function AttendancePaySheetScreen() {
 
   // Date Picker State & Handlers
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const showDatePicker = () => setDatePickerVisibility(true);
+  const [activeDatePickerTarget, setActiveDatePickerTarget] = useState<'entry' | 'startDate' | 'endDate'>('entry');
+
+  const showDatePickerFor = (target: 'entry' | 'startDate' | 'endDate') => {
+    setActiveDatePickerTarget(target);
+    setDatePickerVisibility(true);
+  };
+  const showDatePicker = () => showDatePickerFor('entry');
   const hideDatePicker = () => setDatePickerVisibility(false);
   const getInitialDatePickerDate = () => {
-    if (!entryDate) return new Date();
-    const parts = entryDate.split('-');
+    let targetDateStr = entryDate;
+    if (activeDatePickerTarget === 'startDate') targetDateStr = newSheetStartDate;
+    if (activeDatePickerTarget === 'endDate') targetDateStr = newSheetEndDate;
+    if (!targetDateStr) return new Date();
+    const parts = targetDateStr.split('-');
     if (parts.length === 3) {
       return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
     }
@@ -575,11 +584,11 @@ export default function AttendancePaySheetScreen() {
             <Pressable style={styles.headerActionButton} onPress={() => setIsLiftingRatesVisible(true)}>
               <Ruler color={colors.dark.accent} size={18} />
             </Pressable>
-            {user?.role === 'ADMIN' && (
+            
               <Pressable style={styles.headerActionButton} onPress={() => setIsMasterSettingsVisible(true)}>
                 <Settings color={colors.dark.accent} size={18} />
               </Pressable>
-            )}
+            
           </View>
         </View>
 
@@ -1353,7 +1362,21 @@ export default function AttendancePaySheetScreen() {
                 const year = date.getFullYear();
                 const month = String(date.getMonth() + 1).padStart(2, '0');
                 const day = String(date.getDate()).padStart(2, '0');
-                setEntryDate(`${year}-${month}-${day}`);
+                const formattedDate = `${year}-${month}-${day}`;
+                if (activeDatePickerTarget === 'entry') {
+                  setEntryDate(formattedDate);
+                } else if (activeDatePickerTarget === 'startDate') {
+                  setNewSheetStartDate(formattedDate);
+                  // Auto compute end date (start date + 6 days)
+                  const endDateObj = new Date(date);
+                  endDateObj.setDate(endDateObj.getDate() + 6);
+                  const endY = endDateObj.getFullYear();
+                  const endM = String(endDateObj.getMonth() + 1).padStart(2, '0');
+                  const endD = String(endDateObj.getDate()).padStart(2, '0');
+                  setNewSheetEndDate(`${endY}-${endM}-${endD}`);
+                } else if (activeDatePickerTarget === 'endDate') {
+                  setNewSheetEndDate(formattedDate);
+                }
               }
               setDatePickerVisibility(false);
             }}
@@ -1398,7 +1421,7 @@ export default function AttendancePaySheetScreen() {
                   {Platform.OS === 'web' ? (
                     <View style={[styles.dateInputContainer, { maxWidth: 250 }]}>
                       <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
-                      <Text style={styles.dropdownSelectedText}>{newSheetStartDate}</Text>
+                      <Text style={styles.dropdownSelectedText}>{newSheetStartDate || 'Select Start Date'}</Text>
                       <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
                       <input
                         type="date"
@@ -1431,15 +1454,14 @@ export default function AttendancePaySheetScreen() {
                       />
                     </View>
                   ) : (
-                    <View style={[styles.masterInputContainer, { maxWidth: 250 }]}>
-                      <TextInput
-                        style={styles.masterTextInput}
-                        value={newSheetStartDate}
-                        onChangeText={setNewSheetStartDate}
-                        placeholder="YYYY-MM-DD"
-                        placeholderTextColor={colors.dark.textMuted}
-                      />
-                    </View>
+                    <Pressable
+                      style={[styles.dateInputContainer, { maxWidth: 250 }]}
+                      onPress={() => showDatePickerFor('startDate')}
+                    >
+                      <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
+                      <Text style={styles.dropdownSelectedText}>{newSheetStartDate || 'YYYY-MM-DD'}</Text>
+                      <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
+                    </Pressable>
                   )}
                 </View>
 
@@ -1448,7 +1470,7 @@ export default function AttendancePaySheetScreen() {
                   {Platform.OS === 'web' ? (
                     <View style={[styles.dateInputContainer, { maxWidth: 250 }]}>
                       <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
-                      <Text style={styles.dropdownSelectedText}>{newSheetEndDate}</Text>
+                      <Text style={styles.dropdownSelectedText}>{newSheetEndDate || 'Select End Date'}</Text>
                       <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
                       <input
                         type="date"
@@ -1473,15 +1495,14 @@ export default function AttendancePaySheetScreen() {
                       />
                     </View>
                   ) : (
-                    <View style={[styles.masterInputContainer, { maxWidth: 250 }]}>
-                      <TextInput
-                        style={styles.masterTextInput}
-                        value={newSheetEndDate}
-                        onChangeText={setNewSheetEndDate}
-                        placeholder="YYYY-MM-DD"
-                        placeholderTextColor={colors.dark.textMuted}
-                      />
-                    </View>
+                    <Pressable
+                      style={[styles.dateInputContainer, { maxWidth: 250 }]}
+                      onPress={() => showDatePickerFor('endDate')}
+                    >
+                      <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
+                      <Text style={styles.dropdownSelectedText}>{newSheetEndDate || 'YYYY-MM-DD'}</Text>
+                      <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
+                    </Pressable>
                   )}
                 </View>
               </ScrollView>

@@ -245,7 +245,7 @@ function TabNavigator() {
         tabBarIcon: ({ color, size }) => {
           if (route.name === 'Dashboard') return <LayoutDashboard color={color} size={size} />;
           if (route.name === 'Sites') return <Home color={color} size={size} />;
-          if (route.name === 'Labour') return <HardHat color={color} size={size} />;
+          if (route.name === 'Attendance') return <HardHat color={color} size={size} />;
           if (route.name === 'Clients') return <Users color={color} size={size} />;
           if (route.name === 'Finance') return <DollarSign color={color} size={size} />;
           return null;
@@ -254,7 +254,7 @@ function TabNavigator() {
     >
       <Tab.Screen name="Dashboard" component={HomeStackNavigator} options={{ headerShown: false }} />
       <Tab.Screen name="Sites" component={SitesStackNavigator} options={{ headerShown: false }} />
-      <Tab.Screen name="Labour" component={LabourStackNavigator} options={{ headerShown: false }} />
+      <Tab.Screen name="Attendance" component={LabourStackNavigator} options={{ headerShown: false }} />
       <Tab.Screen name="Clients" component={ClientListScreen} />
       {user?.role === 'ADMIN' && (
         <Tab.Screen name="Finance" component={FinanceStackNavigator} options={{ headerShown: false }} />
