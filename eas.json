@@ -10,13 +10,12 @@
     },
     "preview": {
       "distribution": "internal",
-      "npmCommand": "npm install --legacy-peer-deps",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
       }
     },
     "production": {
-      "npmCommand": "npm install --legacy-peer-deps",
       "android": {
         "buildType": "apk"
       }
