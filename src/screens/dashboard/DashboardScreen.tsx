@@ -246,8 +246,6 @@ export default function DashboardScreen() {
     </SafeAreaView>
   );
 }
-  );
-}
 
 const styles = StyleSheet.create({
   container: {
