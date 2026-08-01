@@ -240,14 +240,14 @@ export default function DashboardScreen() {
         {/* Quick Operations — 1 Row 4 Column compact grid */}
         <Text style={styles.sectionTitle}>Quick Operations</Text>
         <View style={styles.gridRow}>
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Labour', { screen: 'AttendanceSheet' })}>
+          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('AttendanceSheet')}>
             <View style={[styles.gridIconBox, { backgroundColor: 'rgba(244, 63, 94, 0.12)' }]}>
               <ClipboardList color="#f43f5e" size={20} />
             </View>
             <Text style={styles.gridLabel} numberOfLines={1}>Attendance</Text>
           </Pressable>
 
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Labour', { screen: 'LabourList' })}>
+          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('LabourList')}>
             <View style={[styles.gridIconBox, { backgroundColor: 'rgba(59, 130, 246, 0.12)' }]}>
               <HardHat color="#3b82f6" size={20} />
             </View>

@@ -117,6 +117,16 @@ function HomeStackNavigator() {
         options={{ title: 'Petty Cash & Expenses' }}
       />
       <HomeStack.Screen
+        name="AttendanceSheet"
+        component={AttendancePaySheetScreen}
+        options={{ title: 'Attendance Entry' }}
+      />
+      <HomeStack.Screen
+        name="LabourList"
+        component={LabourListScreen}
+        options={{ title: 'Labour Master' }}
+      />
+      <HomeStack.Screen
         name="PurchaseList"
         component={PurchaseListScreen}
         options={{ title: 'Material Purchases' }}
