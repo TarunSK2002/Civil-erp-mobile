@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TextInput, Pressable, ScrollView, ActivityIndicator, Alert, Modal, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/client';
 import { colors } from '../../theme/colors';
@@ -549,69 +550,70 @@ export default function AttendancePaySheetScreen() {
   const activePayeeName = payees?.find((p: any) => p.id.toString() === selectedPayeeId)?.Name || 'Choose Contractor';
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 60 }}>
-      {/* 🚀 Sticky Header Banner */}
-      <View style={styles.headerBanner}>
-        <View style={styles.headerLeft}>
-          <HardHat color={colors.dark.accent} size={24} />
-          <View style={{ marginLeft: 10 }}>
-            <Text style={styles.bannerTitle}>Attendance Sheets</Text>
-            <Text style={styles.bannerSubtitle}>Record daily logs & contractor values</Text>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 60 }}>
+        {/* 🚀 Sticky Header Banner */}
+        <View style={styles.headerBanner}>
+          <View style={styles.headerLeft}>
+            <HardHat color={colors.dark.accent} size={24} />
+            <View style={{ marginLeft: 10 }}>
+              <Text style={styles.bannerTitle}>Attendance Sheets</Text>
+              <Text style={styles.bannerSubtitle}>Record daily logs & contractor values</Text>
+            </View>
+          </View>
+          <View style={styles.headerRightActions}>
+            <Pressable style={styles.headerActionButton} onPress={() => navigation.navigate('LabourList')}>
+              <HardHat color={colors.dark.accent} size={18} />
+            </Pressable>
+            <Pressable style={styles.headerActionButton} onPress={() => navigation.navigate('WeeklyPayList')}>
+              <FileSpreadsheet color={colors.dark.accent} size={18} />
+            </Pressable>
+            <Pressable style={styles.headerActionButton} onPress={() => setIsLiftingRatesVisible(true)}>
+              <Ruler color={colors.dark.accent} size={18} />
+            </Pressable>
+            <Pressable style={styles.headerActionButton} onPress={() => setIsMasterSettingsVisible(true)}>
+              <Settings color={colors.dark.accent} size={18} />
+            </Pressable>
           </View>
         </View>
-        <View style={styles.headerRightActions}>
-          <Pressable style={styles.headerActionButton} onPress={() => navigation.navigate('LabourList')}>
-            <HardHat color={colors.dark.accent} size={18} />
-          </Pressable>
-          <Pressable style={styles.headerActionButton} onPress={() => navigation.navigate('WeeklyPayList')}>
-            <FileSpreadsheet color={colors.dark.accent} size={18} />
-          </Pressable>
-          <Pressable style={styles.headerActionButton} onPress={() => setIsLiftingRatesVisible(true)}>
-            <Ruler color={colors.dark.accent} size={18} />
-          </Pressable>
-          <Pressable style={styles.headerActionButton} onPress={() => setIsMasterSettingsVisible(true)}>
-            <Settings color={colors.dark.accent} size={18} />
-          </Pressable>
-        </View>
-      </View>
 
-      {/* 📅 Weeks horizontal chip scroll */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionLabel}>Active Sheets</Text>
-      </View>
-      {sheetsLoading ? (
-        <ActivityIndicator size="small" color={colors.dark.accent} style={{ marginVertical: 10 }} />
-      ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sheetSelectorRow}>
-          <Pressable
-            style={[
-              styles.sheetChip,
-              {
-                backgroundColor: colors.dark.accent + '15',
-                borderColor: colors.dark.accent,
-                borderStyle: 'dashed',
-                borderWidth: 1
-              }
-            ]}
-            onPress={() => {
-              // Pre-populate with typical dates: start = Monday, end = Sunday of current week
-              const today = new Date();
-              const day = today.getDay();
-              const diffToMonday = today.getDate() - day + (day === 0 ? -6 : 1);
-              const monday = new Date(today.setDate(diffToMonday));
-              const sunday = new Date(monday);
-              sunday.setDate(monday.getDate() + 6);
-              
-              setNewSheetStartDate(monday.toISOString().split('T')[0]);
-              setNewSheetEndDate(sunday.toISOString().split('T')[0]);
-              setNewSheetTitle(`Week ${monday.getDate()} ${monday.toLocaleString('default', { month: 'short' })} - ${sunday.getDate()} ${sunday.toLocaleString('default', { month: 'short' })}`);
-              setIsCreateSheetVisible(true);
-            }}
-          >
-            <Text style={[styles.sheetChipText, { color: colors.dark.accent, fontWeight: '700' }]}>
-              + New Sheet
-            </Text>
-          </Pressable>
+        {/* 📅 Weeks horizontal chip scroll */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionLabel}>Active Sheets</Text>
+        </View>
+        {sheetsLoading ? (
+          <ActivityIndicator size="small" color={colors.dark.accent} style={{ marginVertical: 10 }} />
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sheetSelectorRow}>
+            <Pressable
+              style={[
+                styles.sheetChip,
+                {
+                  backgroundColor: colors.dark.accent + '15',
+                  borderColor: colors.dark.accent,
+                  borderStyle: 'dashed',
+                  borderWidth: 1
+                }
+              ]}
+              onPress={() => {
+                // Pre-populate with typical dates: start = Monday, end = Sunday of current week
+                const today = new Date();
+                const day = today.getDay();
+                const diffToMonday = today.getDate() - day + (day === 0 ? -6 : 1);
+                const monday = new Date(today.setDate(diffToMonday));
+                const sunday = new Date(monday);
+                sunday.setDate(monday.getDate() + 6);
+                
+                setNewSheetStartDate(monday.toISOString().split('T')[0]);
+                setNewSheetEndDate(sunday.toISOString().split('T')[0]);
+                setNewSheetTitle(`Week ${monday.getDate()} ${monday.toLocaleString('default', { month: 'short' })} - ${sunday.getDate()} ${sunday.toLocaleString('default', { month: 'short' })}`);
+                setIsCreateSheetVisible(true);
+              }}
+            >
+              <Text style={[styles.sheetChipText, { color: colors.dark.accent, fontWeight: '700' }]}>
+                + New Sheet
+              </Text>
+            </Pressable>
           {sheets?.map((s) => (
             <Pressable
               key={s.id}
@@ -1639,7 +1641,8 @@ export default function AttendancePaySheetScreen() {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

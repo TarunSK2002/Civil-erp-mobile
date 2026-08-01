@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, Pressable, RefreshControl, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../auth/AuthContext';
 import { colors } from '../../theme/colors';
@@ -54,21 +55,21 @@ export default function DashboardScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer} edges={['top', 'left', 'right']}>
         <ActivityIndicator size="large" color={colors.dark.accent} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
+      <SafeAreaView style={styles.errorContainer} edges={['top', 'left', 'right']}>
         <AlertCircle color={colors.dark.error} size={48} />
         <Text style={styles.errorText}>{error}</Text>
         <Pressable style={styles.retryButton} onPress={() => { setLoading(true); fetchStats(); }}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </Pressable>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -117,130 +118,134 @@ export default function DashboardScreen() {
   ];
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.dark.accent} />
-      }
-    >
-      {/* Greetings Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Hello, {user?.fullName || 'Admin'}</Text>
-          <Text style={styles.subtitle}>Here is your summary for today</Text>
-        </View>
-        <View style={styles.dateBadge}>
-          <Calendar size={14} color={colors.dark.textSecondary} style={{ marginRight: 6 }} />
-          <Text style={styles.dateText}>{currentDate}</Text>
-        </View>
-      </View>
-
-      {/* Main Stats Scrollable Horizontal Grid */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
-        style={styles.statsScroll}
-        contentContainerStyle={styles.statsScrollContent}
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.dark.accent} />
+        }
       >
-        <StatCard
-          title="Total Clients"
-          value={stats?.totalClients || 0}
-          icon={Users}
-          color="#4f46e5"
-        />
-        <StatCard
-          title="Active Sites"
-          value={stats?.activeSites || 0}
-          icon={Home}
-          color="#16a34a"
-        />
-        <StatCard
-          title="Today's Payments"
-          value={`₹${(stats?.todayPayments || 0).toLocaleString('en-IN')}`}
-          icon={CreditCard}
-          color="#eab308"
-        />
-        <StatCard
-          title="Pending Payments"
-          value={`₹${(stats?.pendingPayments || 0).toLocaleString('en-IN')}`}
-          icon={AlertCircle}
-          color="#f43f5e"
-        />
+        {/* Greetings Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>Hello, {user?.fullName || 'Admin'}</Text>
+            <Text style={styles.subtitle}>Here is your summary for today</Text>
+          </View>
+          <View style={styles.dateBadge}>
+            <Calendar size={14} color={colors.dark.textSecondary} style={{ marginRight: 6 }} />
+            <Text style={styles.dateText}>{currentDate}</Text>
+          </View>
+        </View>
+
+        {/* Main Stats Scrollable Horizontal Grid */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={styles.statsScroll}
+          contentContainerStyle={styles.statsScrollContent}
+        >
+          <StatCard
+            title="Total Clients"
+            value={stats?.totalClients || 0}
+            icon={Users}
+            color="#4f46e5"
+          />
+          <StatCard
+            title="Active Sites"
+            value={stats?.activeSites || 0}
+            icon={Home}
+            color="#16a34a"
+          />
+          <StatCard
+            title="Today's Payments"
+            value={`₹${(stats?.todayPayments || 0).toLocaleString('en-IN')}`}
+            icon={CreditCard}
+            color="#eab308"
+          />
+          <StatCard
+            title="Pending Payments"
+            value={`₹${(stats?.pendingPayments || 0).toLocaleString('en-IN')}`}
+            icon={AlertCircle}
+            color="#f43f5e"
+          />
+        </ScrollView>
+
+        {/* Quick Operations — 1 Row 4 Column compact grid */}
+        <Text style={styles.sectionTitle}>Quick Operations</Text>
+        <View style={styles.gridRow}>
+          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Labour', { screen: 'AttendanceSheet' })}>
+            <View style={[styles.gridIconBox, { backgroundColor: 'rgba(244, 63, 94, 0.12)' }]}>
+              <ClipboardList color="#f43f5e" size={20} />
+            </View>
+            <Text style={styles.gridLabel} numberOfLines={1}>Attendance</Text>
+          </Pressable>
+
+          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Labour', { screen: 'LabourList' })}>
+            <View style={[styles.gridIconBox, { backgroundColor: 'rgba(59, 130, 246, 0.12)' }]}>
+              <HardHat color="#3b82f6" size={20} />
+            </View>
+            <Text style={styles.gridLabel} numberOfLines={1}>Labour List</Text>
+          </Pressable>
+
+          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Labour', { screen: 'WeeklyPayList' })}>
+            <View style={[styles.gridIconBox, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
+              <FileSpreadsheet color="#8b5cf6" size={20} />
+            </View>
+            <Text style={styles.gridLabel} numberOfLines={1}>Pay Sheets</Text>
+          </Pressable>
+
+          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Finance', { screen: 'PaymentList' })}>
+            <View style={[styles.gridIconBox, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+              <CreditCard color="#10b981" size={20} />
+            </View>
+            <Text style={styles.gridLabel} numberOfLines={1}>Payments</Text>
+          </Pressable>
+        </View>
+
+        {/* Secondary & Master Modules — Square Grid Cards */}
+        <Text style={styles.sectionTitle}>Secondary & Master Modules</Text>
+        <View style={styles.gridRowWrap}>
+          {moduleCards.map((item, idx) => {
+            const IconComponent = item.icon;
+            return (
+              <Pressable
+                key={idx}
+                style={styles.gridCardFour}
+                onPress={() => navigation.navigate(item.screen)}
+              >
+                <View style={[styles.gridIconBox, { backgroundColor: item.bgColor }]}>
+                  <IconComponent color={item.iconColor} size={20} />
+                </View>
+                <Text style={styles.gridLabel} numberOfLines={1}>{item.title}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* Overview Site Detail progress summary */}
+        <Text style={styles.sectionTitle}>Sites Progress</Text>
+        <View style={styles.progressCard}>
+          <View style={styles.progressRow}>
+            <Text style={styles.progressLabel}>Upcoming Projects</Text>
+            <Text style={styles.progressCount}>{stats?.upcomingSites || 0}</Text>
+          </View>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBar, { width: `${Math.min(100, ((stats?.upcomingSites || 0) / (stats?.totalClients || 1)) * 100)}%`, backgroundColor: '#FFB300' }]} />
+          </View>
+
+          <View style={[styles.progressRow, { marginTop: 16 }]}>
+            <Text style={styles.progressLabel}>Completed Projects</Text>
+            <Text style={styles.progressCount}>{stats?.completedSites || 0}</Text>
+          </View>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBar, { width: `${Math.min(100, ((stats?.completedSites || 0) / (stats?.totalClients || 1)) * 100)}%`, backgroundColor: '#4CAF50' }]} />
+          </View>
+        </View>
       </ScrollView>
-
-      {/* Quick Operations — 1 Row 4 Column compact grid */}
-      <Text style={styles.sectionTitle}>Quick Operations</Text>
-      <View style={styles.gridRow}>
-        <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Labour', { screen: 'AttendanceSheet' })}>
-          <View style={[styles.gridIconBox, { backgroundColor: 'rgba(244, 63, 94, 0.12)' }]}>
-            <ClipboardList color="#f43f5e" size={20} />
-          </View>
-          <Text style={styles.gridLabel} numberOfLines={1}>Attendance</Text>
-        </Pressable>
-
-        <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Labour', { screen: 'LabourList' })}>
-          <View style={[styles.gridIconBox, { backgroundColor: 'rgba(59, 130, 246, 0.12)' }]}>
-            <HardHat color="#3b82f6" size={20} />
-          </View>
-          <Text style={styles.gridLabel} numberOfLines={1}>Labour List</Text>
-        </Pressable>
-
-        <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Labour', { screen: 'WeeklyPayList' })}>
-          <View style={[styles.gridIconBox, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
-            <FileSpreadsheet color="#8b5cf6" size={20} />
-          </View>
-          <Text style={styles.gridLabel} numberOfLines={1}>Pay Sheets</Text>
-        </Pressable>
-
-        <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Finance', { screen: 'PaymentList' })}>
-          <View style={[styles.gridIconBox, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
-            <CreditCard color="#10b981" size={20} />
-          </View>
-          <Text style={styles.gridLabel} numberOfLines={1}>Payments</Text>
-        </Pressable>
-      </View>
-
-      {/* Secondary & Master Modules — Square Grid Cards */}
-      <Text style={styles.sectionTitle}>Secondary & Master Modules</Text>
-      <View style={styles.gridRowWrap}>
-        {moduleCards.map((item, idx) => {
-          const IconComponent = item.icon;
-          return (
-            <Pressable
-              key={idx}
-              style={styles.gridCardFour}
-              onPress={() => navigation.navigate(item.screen)}
-            >
-              <View style={[styles.gridIconBox, { backgroundColor: item.bgColor }]}>
-                <IconComponent color={item.iconColor} size={20} />
-              </View>
-              <Text style={styles.gridLabel} numberOfLines={1}>{item.title}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {/* Overview Site Detail progress summary */}
-      <Text style={styles.sectionTitle}>Sites Progress</Text>
-      <View style={styles.progressCard}>
-        <View style={styles.progressRow}>
-          <Text style={styles.progressLabel}>Upcoming Projects</Text>
-          <Text style={styles.progressCount}>{stats?.upcomingSites || 0}</Text>
-        </View>
-        <View style={styles.progressBarBg}>
-          <View style={[styles.progressBar, { width: `${Math.min(100, ((stats?.upcomingSites || 0) / (stats?.totalClients || 1)) * 100)}%`, backgroundColor: '#FFB300' }]} />
-        </View>
-
-        <View style={[styles.progressRow, { marginTop: 16 }]}>
-          <Text style={styles.progressLabel}>Completed Projects</Text>
-          <Text style={styles.progressCount}>{stats?.completedSites || 0}</Text>
-        </View>
-        <View style={styles.progressBarBg}>
-          <View style={[styles.progressBar, { width: `${Math.min(100, ((stats?.completedSites || 0) / (stats?.totalClients || 1)) * 100)}%`, backgroundColor: '#4CAF50' }]} />
-        </View>
-      </View>
-    </ScrollView>
+    </SafeAreaView>
+  );
+}
   );
 }
 
