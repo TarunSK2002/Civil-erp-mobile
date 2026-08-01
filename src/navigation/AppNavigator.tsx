@@ -24,6 +24,7 @@ import PurchaseListScreen from '../screens/materials/PurchaseListScreen';
 import PurchaseFormScreen from '../screens/materials/PurchaseFormScreen';
 import PersonTypeScreen from '../screens/masters/PersonTypeScreen';
 import ShiftMasterScreen from '../screens/masters/ShiftMasterScreen';
+import MaterialTypeMasterScreen from '../screens/masters/MaterialTypeMasterScreen';
 import PettyCashScreen from '../screens/expenses/PettyCashScreen';
 
 // ──── Home / Dashboard Stack ──────────────────────────────────────────────────
@@ -58,6 +59,11 @@ function HomeStackNavigator() {
         name="ShiftMaster"
         component={ShiftMasterScreen}
         options={{ title: 'Shift Master' }}
+      />
+      <HomeStack.Screen
+        name="MaterialTypeMaster"
+        component={MaterialTypeMasterScreen}
+        options={{ title: 'Material Types Master' }}
       />
       <HomeStack.Screen
         name="PettyCash"

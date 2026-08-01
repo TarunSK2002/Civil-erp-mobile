@@ -20,7 +20,8 @@ import {
   ShoppingBag,
   UserCheck,
   Clock,
-  Wallet
+  Wallet,
+  Layers
 } from 'lucide-react-native';
 
 export default function DashboardScreen() {
@@ -107,6 +108,13 @@ export default function DashboardScreen() {
       screen: 'ShiftMaster',
       bgColor: 'rgba(139, 92, 246, 0.12)',
       iconColor: '#8b5cf6',
+    },
+    {
+      title: 'Material Types',
+      icon: Layers,
+      screen: 'MaterialTypeMaster',
+      bgColor: 'rgba(6, 182, 212, 0.12)',
+      iconColor: '#06b6d4',
     },
     {
       title: 'Petty Cash',
