@@ -10,6 +10,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { useNavigation } from '@react-navigation/native';
 import { FileSpreadsheet } from 'lucide-react-native';
+import { useAuth } from '../../auth/AuthContext';
 
 interface ShiftType {
   id: number;
@@ -32,6 +33,7 @@ interface AttendanceSheet {
 }
 
 export default function AttendancePaySheetScreen() {
+  const { user } = useAuth();
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
   const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
@@ -565,15 +567,19 @@ export default function AttendancePaySheetScreen() {
             <Pressable style={styles.headerActionButton} onPress={() => navigation.navigate('LabourList')}>
               <HardHat color={colors.dark.accent} size={18} />
             </Pressable>
-            <Pressable style={styles.headerActionButton} onPress={() => navigation.navigate('WeeklyPayList')}>
-              <FileSpreadsheet color={colors.dark.accent} size={18} />
-            </Pressable>
+            {user?.role === 'ADMIN' && (
+              <Pressable style={styles.headerActionButton} onPress={() => navigation.navigate('WeeklyPayList')}>
+                <FileSpreadsheet color={colors.dark.accent} size={18} />
+              </Pressable>
+            )}
             <Pressable style={styles.headerActionButton} onPress={() => setIsLiftingRatesVisible(true)}>
               <Ruler color={colors.dark.accent} size={18} />
             </Pressable>
-            <Pressable style={styles.headerActionButton} onPress={() => setIsMasterSettingsVisible(true)}>
-              <Settings color={colors.dark.accent} size={18} />
-            </Pressable>
+            {user?.role === 'ADMIN' && (
+              <Pressable style={styles.headerActionButton} onPress={() => setIsMasterSettingsVisible(true)}>
+                <Settings color={colors.dark.accent} size={18} />
+              </Pressable>
+            )}
           </View>
         </View>
 
