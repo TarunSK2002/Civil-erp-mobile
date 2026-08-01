@@ -154,7 +154,9 @@ export default function ClientListScreen() {
             <View style={styles.clientCard}>
               <View style={styles.cardInfo}>
                 <Text style={styles.clientName}>{item.Name}</Text>
+                {user?.role === 'ADMIN' && (
                 <Text style={styles.clientPhone}>{item.MobileNumber}</Text>
+                )}
                 <View style={styles.badgeRow}>
                   <Text style={styles.paymentBadge}>{item.PaymentType}</Text>
                 </View>

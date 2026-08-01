@@ -133,6 +133,7 @@ export default function DashboardScreen() {
       screen: 'Export',
       bgColor: 'rgba(59, 130, 246, 0.12)',
       iconColor: '#3b82f6',
+      adminOnly: true,
     },
     {
       title: 'Material Types',

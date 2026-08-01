@@ -36,7 +36,7 @@ export default function AttendancePaySheetScreen() {
   const queryClient = useQueryClient();
   const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
   const [entryDate, setEntryDate] = useState(new Date().toISOString().split('T')[0]);
-  
+
   // Date Picker State & Handlers
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const showDatePicker = () => setDatePickerVisibility(true);
@@ -49,11 +49,11 @@ export default function AttendancePaySheetScreen() {
     }
     return new Date();
   };
-  
+
   // Selection references
   const [selectedSiteId, setSelectedSiteId] = useState('');
   const [selectedPayeeId, setSelectedPayeeId] = useState('');
-  
+
   // Dropdown selector state toggles for a cleaner mobile layout
   const [showSiteDropdown, setShowSiteDropdown] = useState(false);
   const [showPayeeDropdown, setShowPayeeDropdown] = useState(false);
@@ -463,7 +463,7 @@ export default function AttendancePaySheetScreen() {
 
   const getSelectedLiftingRecords = () => {
     if (!liftingRecords || !selectedPayeeId || !selectedSiteId) return [];
-    return liftingRecords.filter((r: any) => 
+    return liftingRecords.filter((r: any) =>
       r.PayeeId === parseInt(selectedPayeeId) &&
       r.SiteId === parseInt(selectedSiteId) &&
       r.LiftingDate === entryDate
@@ -525,7 +525,7 @@ export default function AttendancePaySheetScreen() {
   const handleSaveProfit = () => {
     const amt = parseFloat(profitAmount);
     const profitItem = getMiscItems().find((m: any) => m.name.startsWith('Mason Profit'));
-    
+
     if (isNaN(amt) || amt <= 0) {
       if (profitItem) {
         deleteMiscMutation.mutate(profitItem.id);
@@ -534,7 +534,7 @@ export default function AttendancePaySheetScreen() {
     }
 
     const name = profitPercent ? `Mason Profit (${profitPercent}%)` : 'Mason Profit';
-    
+
     if (profitItem) {
       deleteMiscMutation.mutate(profitItem.id, {
         onSuccess: () => {
@@ -603,7 +603,7 @@ export default function AttendancePaySheetScreen() {
                 const monday = new Date(today.setDate(diffToMonday));
                 const sunday = new Date(monday);
                 sunday.setDate(monday.getDate() + 6);
-                
+
                 setNewSheetStartDate(monday.toISOString().split('T')[0]);
                 setNewSheetEndDate(sunday.toISOString().split('T')[0]);
                 setNewSheetTitle(`Week ${monday.getDate()} ${monday.toLocaleString('default', { month: 'short' })} - ${sunday.getDate()} ${sunday.toLocaleString('default', { month: 'short' })}`);
@@ -614,1033 +614,1033 @@ export default function AttendancePaySheetScreen() {
                 + New Sheet
               </Text>
             </Pressable>
-          {sheets?.map((s) => (
+            {sheets?.map((s) => (
+              <Pressable
+                key={s.id}
+                style={[
+                  styles.sheetChip,
+                  selectedSheetId === s.id && styles.sheetChipActive
+                ]}
+                onPress={() => setSelectedSheetId(s.id)}
+              >
+                <Text style={[
+                  styles.sheetChipText,
+                  selectedSheetId === s.id && styles.sheetChipTextActive
+                ]}>
+                  {s.Title}
+                  {s.WeekStartDate && s.WeekEndDate ? (
+                    ` (${s.WeekStartDate.split('-')[2]}/${s.WeekStartDate.split('-')[1]} - ${s.WeekEndDate.split('-')[2]}/${s.WeekEndDate.split('-')[1]})`
+                  ) : ''}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+
+        {/* 🎛️ Tab Switcher */}
+        <View style={styles.topTabBar}>
+          <Pressable
+            style={[styles.topTabButton, activeTab === 'attendance' && styles.topTabButtonActive]}
+            onPress={() => setActiveTab('attendance')}
+          >
+            <Clock color={activeTab === 'attendance' ? '#0F0F1A' : colors.dark.textSecondary} size={14} />
+            <Text style={[styles.topTabButtonText, activeTab === 'attendance' && styles.topTabButtonTextActive]}>
+              Attendance
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.topTabButton, activeTab === 'misc' && styles.topTabButtonActiveMisc]}
+            onPress={() => setActiveTab('misc')}
+          >
+            <TrendingUp color={activeTab === 'misc' ? '#0F0F1A' : colors.dark.textSecondary} size={14} />
+            <Text style={[styles.topTabButtonText, activeTab === 'misc' && styles.topTabButtonTextActiveMisc]}>
+              Misc Charges
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.topTabButton, activeTab === 'lifting' && styles.topTabButtonActiveLifting]}
+            onPress={() => setActiveTab('lifting')}
+          >
+            <Package color={activeTab === 'lifting' ? '#0F0F1A' : colors.dark.textSecondary} size={14} />
+            <Text style={[styles.topTabButtonText, activeTab === 'lifting' && styles.topTabButtonTextActiveLifting]}>
+              Lifting
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* 📝 Main entry card */}
+        <View style={styles.card}>
+          {/* Date parameter */}
+          <View style={styles.formGroup}>
+            <Text style={styles.inputLabel}>Date (YYYY-MM-DD)</Text>
+            {Platform.OS === 'web' ? (
+              <View style={styles.dateInputContainer}>
+                <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
+                <Text style={styles.dropdownSelectedText}>{entryDate}</Text>
+                <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
+                <input
+                  type="date"
+                  value={entryDate}
+                  onChange={(e) => setEntryDate(e.target.value)}
+                  onClick={(e: any) => {
+                    try {
+                      e.currentTarget.showPicker();
+                    } catch (err) { }
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0,
+                    cursor: 'pointer',
+                    border: 'none',
+                    zIndex: 99,
+                  }}
+                />
+              </View>
+            ) : (
+              <Pressable style={styles.dateInputContainer} onPress={showDatePicker}>
+                <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
+                <Text style={styles.dropdownSelectedText}>{entryDate}</Text>
+                <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
+              </Pressable>
+            )}
+          </View>
+
+          {/* 🏢 Site Selector Dropdown */}
+          <View style={styles.formGroup}>
+            <Text style={styles.inputLabel}>Site</Text>
             <Pressable
-              key={s.id}
-              style={[
-                styles.sheetChip,
-                selectedSheetId === s.id && styles.sheetChipActive
-              ]}
-              onPress={() => setSelectedSheetId(s.id)}
+              style={[styles.dropdownButton, showSiteDropdown && styles.dropdownButtonActive]}
+              onPress={() => { setShowSiteDropdown(!showSiteDropdown); setShowPayeeDropdown(false); }}
             >
-              <Text style={[
-                styles.sheetChipText,
-                selectedSheetId === s.id && styles.sheetChipTextActive
-              ]}>
-                {s.Title}
-                {s.WeekStartDate && s.WeekEndDate ? (
-                  ` (${s.WeekStartDate.split('-')[2]}/${s.WeekStartDate.split('-')[1]} - ${s.WeekEndDate.split('-')[2]}/${s.WeekEndDate.split('-')[1]})`
-                ) : ''}
+              <Text style={selectedSiteId ? styles.dropdownSelectedText : styles.dropdownPlaceholderText}>
+                {activeSiteName}
               </Text>
+              <ChevronDown color={colors.dark.textSecondary} size={16} />
             </Pressable>
-          ))}
-        </ScrollView>
-      )}
 
-      {/* 🎛️ Tab Switcher */}
-      <View style={styles.topTabBar}>
-        <Pressable
-          style={[styles.topTabButton, activeTab === 'attendance' && styles.topTabButtonActive]}
-          onPress={() => setActiveTab('attendance')}
-        >
-          <Clock color={activeTab === 'attendance' ? '#0F0F1A' : colors.dark.textSecondary} size={14} />
-          <Text style={[styles.topTabButtonText, activeTab === 'attendance' && styles.topTabButtonTextActive]}>
-            Attendance
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.topTabButton, activeTab === 'misc' && styles.topTabButtonActiveMisc]}
-          onPress={() => setActiveTab('misc')}
-        >
-          <TrendingUp color={activeTab === 'misc' ? '#0F0F1A' : colors.dark.textSecondary} size={14} />
-          <Text style={[styles.topTabButtonText, activeTab === 'misc' && styles.topTabButtonTextActiveMisc]}>
-            Misc Charges
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.topTabButton, activeTab === 'lifting' && styles.topTabButtonActiveLifting]}
-          onPress={() => setActiveTab('lifting')}
-        >
-          <Package color={activeTab === 'lifting' ? '#0F0F1A' : colors.dark.textSecondary} size={14} />
-          <Text style={[styles.topTabButtonText, activeTab === 'lifting' && styles.topTabButtonTextActiveLifting]}>
-            Lifting
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* 📝 Main entry card */}
-      <View style={styles.card}>
-        {/* Date parameter */}
-        <View style={styles.formGroup}>
-          <Text style={styles.inputLabel}>Date (YYYY-MM-DD)</Text>
-          {Platform.OS === 'web' ? (
-            <View style={styles.dateInputContainer}>
-              <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
-              <Text style={styles.dropdownSelectedText}>{entryDate}</Text>
-              <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
-              <input
-                type="date"
-                value={entryDate}
-                onChange={(e) => setEntryDate(e.target.value)}
-                onClick={(e: any) => {
-                  try {
-                    e.currentTarget.showPicker();
-                  } catch (err) {}
-                }}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0,
-                  cursor: 'pointer',
-                  border: 'none',
-                  zIndex: 99,
-                }}
-              />
-            </View>
-          ) : (
-            <Pressable style={styles.dateInputContainer} onPress={showDatePicker}>
-              <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
-              <Text style={styles.dropdownSelectedText}>{entryDate}</Text>
-              <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
-            </Pressable>
-          )}
-        </View>
-
-        {/* 🏢 Site Selector Dropdown */}
-        <View style={styles.formGroup}>
-          <Text style={styles.inputLabel}>Site</Text>
-          <Pressable 
-            style={[styles.dropdownButton, showSiteDropdown && styles.dropdownButtonActive]} 
-            onPress={() => { setShowSiteDropdown(!showSiteDropdown); setShowPayeeDropdown(false); }}
-          >
-            <Text style={selectedSiteId ? styles.dropdownSelectedText : styles.dropdownPlaceholderText}>
-              {activeSiteName}
-            </Text>
-            <ChevronDown color={colors.dark.textSecondary} size={16} />
-          </Pressable>
-
-          {showSiteDropdown && (
-            <ScrollView style={styles.dropdownMenu} nestedScrollEnabled={true}>
-              {sites?.map((s: any) => (
-                <Pressable
-                  key={s.id}
-                  style={styles.dropdownOption}
-                  onPress={() => { setSelectedSiteId(s.id.toString()); setShowSiteDropdown(false); }}
-                >
-                  <Text style={styles.dropdownOptionText}>{s.SiteName}</Text>
-                  {selectedSiteId === s.id.toString() && <Check color={colors.dark.accent} size={14} />}
-                </Pressable>
-              ))}
-            </ScrollView>
-          )}
-        </View>
-
-        {/* 👤 Contractor / Payee Dropdown */}
-        <View style={styles.formGroup}>
-          <Text style={styles.inputLabel}>Contractor / Mason</Text>
-          <Pressable 
-            style={[styles.dropdownButton, showPayeeDropdown && styles.dropdownButtonActive]} 
-            onPress={() => { setShowPayeeDropdown(!showPayeeDropdown); setShowSiteDropdown(false); }}
-          >
-            <Text style={selectedPayeeId ? styles.dropdownSelectedText : styles.dropdownPlaceholderText}>
-              {activePayeeName}
-            </Text>
-            <ChevronDown color={colors.dark.textSecondary} size={16} />
-          </Pressable>
-
-          {showPayeeDropdown && (
-            <ScrollView style={styles.dropdownMenu} nestedScrollEnabled={true}>
-              {payees?.map((p: any) => (
-                <Pressable
-                  key={p.id}
-                  style={styles.dropdownOption}
-                  onPress={() => { setSelectedPayeeId(p.id.toString()); setShowPayeeDropdown(false); }}
-                >
-                  <Text style={styles.dropdownOptionText}>{p.Name}</Text>
-                  {selectedPayeeId === p.id.toString() && <Check color={colors.dark.accent} size={14} />}
-                </Pressable>
-              ))}
-            </ScrollView>
-          )}
-        </View>
-
-        {activeTab === 'attendance' && (
-          <View style={{ marginTop: 10 }}>
-            {/* ⚡ Calculation mode toggle selectors */}
-            <View style={styles.tabSelector}>
-              {(['Shift', 'Hour', 'SqFt'] as const).map((mode) => (
-                <Pressable
-                  key={mode}
-                  style={[styles.tabButton, calcMode === mode && styles.tabButtonActive]}
-                  onPress={() => setCalcMode(mode)}
-                >
-                  <Text style={[styles.tabButtonText, calcMode === mode && styles.tabButtonTextActive]}>
-                    {mode}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-
-            {/* 📋 Form Inputs according to calculation mode */}
-            <View style={styles.modeFormWrapper}>
-              <Text style={styles.inputLabel}>Person Type / Role</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScrollRow}>
-                {personTypes?.map((pt: PersonType) => (
+            {showSiteDropdown && (
+              <ScrollView style={styles.dropdownMenu} nestedScrollEnabled={true}>
+                {sites?.map((s: any) => (
                   <Pressable
-                    key={pt.id}
-                    style={[
-                      styles.formChip,
-                      selectedPersonType === pt.Name && styles.formChipActive
-                    ]}
-                    onPress={() => {
-                      setSelectedPersonType(pt.Name);
-                      if (calcMode === 'Hour') {
-                        setRatePerHour(pt.DailyRate.toString());
-                      }
-                    }}
+                    key={s.id}
+                    style={styles.dropdownOption}
+                    onPress={() => { setSelectedSiteId(s.id.toString()); setShowSiteDropdown(false); }}
                   >
-                    <Text style={[
-                      styles.formChipText,
-                      selectedPersonType === pt.Name && styles.formChipTextActive
-                    ]}>{pt.Name}</Text>
+                    <Text style={styles.dropdownOptionText}>{s.SiteName}</Text>
+                    {selectedSiteId === s.id.toString() && <Check color={colors.dark.accent} size={14} />}
                   </Pressable>
                 ))}
               </ScrollView>
+            )}
+          </View>
 
-              {calcMode === 'Shift' && (
-                <View>
-                  <Text style={styles.inputLabel}>Shift Value</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScrollRow}>
-                    {shiftTypes?.map((st: ShiftType) => (
-                      <Pressable
-                        key={st.id}
-                        style={[
-                          styles.formChip,
-                          selectedShiftType === st.ShiftType && styles.formChipActive
-                        ]}
-                        onPress={() => setSelectedShiftType(st.ShiftType)}
-                      >
-                        <Text style={[
-                          styles.formChipText,
-                          selectedShiftType === st.ShiftType && styles.formChipTextActive
-                        ]}>{st.ShiftType} (×{st.ShiftMultiplier})</Text>
-                      </Pressable>
-                    ))}
-                  </ScrollView>
+          {/* 👤 Contractor / Payee Dropdown */}
+          <View style={styles.formGroup}>
+            <Text style={styles.inputLabel}>Contractor / Mason</Text>
+            <Pressable
+              style={[styles.dropdownButton, showPayeeDropdown && styles.dropdownButtonActive]}
+              onPress={() => { setShowPayeeDropdown(!showPayeeDropdown); setShowSiteDropdown(false); }}
+            >
+              <Text style={selectedPayeeId ? styles.dropdownSelectedText : styles.dropdownPlaceholderText}>
+                {activePayeeName}
+              </Text>
+              <ChevronDown color={colors.dark.textSecondary} size={16} />
+            </Pressable>
 
-                  <View style={styles.formGroup}>
-                    <Text style={styles.inputLabel}>Labour Count</Text>
-                    <View style={styles.stepperContainer}>
-                      <Pressable 
-                        style={styles.stepperButton} 
-                        onPress={() => {
-                          const current = parseInt(labourCount) || 1;
-                          if (current > 1) {
-                            setLabourCount((current - 1).toString());
-                          }
-                        }}
-                      >
-                        <Text style={styles.stepperButtonText}>−</Text>
-                      </Pressable>
-                      <TextInput
-                        style={styles.stepperInput}
-                        value={labourCount}
-                        onChangeText={(val) => {
-                          const sanitized = val.replace(/[^0-9]/g, '');
-                          setLabourCount(sanitized);
-                        }}
-                        keyboardType="number-pad"
-                      />
-                      <Pressable 
-                        style={styles.stepperButton} 
-                        onPress={() => {
-                          const current = parseInt(labourCount) || 1;
-                          setLabourCount((current + 1).toString());
-                        }}
-                      >
-                        <Text style={styles.stepperButtonText}>+</Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                </View>
-              )}
+            {showPayeeDropdown && (
+              <ScrollView style={styles.dropdownMenu} nestedScrollEnabled={true}>
+                {payees?.map((p: any) => (
+                  <Pressable
+                    key={p.id}
+                    style={styles.dropdownOption}
+                    onPress={() => { setSelectedPayeeId(p.id.toString()); setShowPayeeDropdown(false); }}
+                  >
+                    <Text style={styles.dropdownOptionText}>{p.Name}</Text>
+                    {selectedPayeeId === p.id.toString() && <Check color={colors.dark.accent} size={14} />}
+                  </Pressable>
+                ))}
+              </ScrollView>
+            )}
+          </View>
 
-              {calcMode === 'Hour' && (
-                <View style={{ marginTop: 14 }}>
-                  <View style={styles.rowWrapper}>
-                    <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
-                      <Text style={styles.inputLabel}>Hours</Text>
-                      <TextInput
-                        style={styles.textInputStyle}
-                        value={hours}
-                        onChangeText={setHours}
-                        placeholder="Hours"
-                        placeholderTextColor={colors.dark.textMuted}
-                        keyboardType="numeric"
-                      />
-                    </View>
-                    <View style={[styles.formGroup, { flex: 1 }]}>
-                      <Text style={styles.inputLabel}>Rate/Hour (₹)</Text>
-                      <TextInput
-                        style={styles.textInputStyle}
-                        value={ratePerHour}
-                        onChangeText={setRatePerHour}
-                        placeholder="Rate/Hr"
-                        placeholderTextColor={colors.dark.textMuted}
-                        keyboardType="numeric"
-                      />
-                    </View>
-                  </View>
-                </View>
-              )}
+          {activeTab === 'attendance' && (
+            <View style={{ marginTop: 10 }}>
+              {/* ⚡ Calculation mode toggle selectors */}
+              <View style={styles.tabSelector}>
+                {(['Shift', 'Hour', 'SqFt'] as const).map((mode) => (
+                  <Pressable
+                    key={mode}
+                    style={[styles.tabButton, calcMode === mode && styles.tabButtonActive]}
+                    onPress={() => setCalcMode(mode)}
+                  >
+                    <Text style={[styles.tabButtonText, calcMode === mode && styles.tabButtonTextActive]}>
+                      {mode}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
 
-              {calcMode === 'SqFt' && (
-                <View style={{ marginTop: 14 }}>
-                  <View style={styles.formGroup}>
-                    <Text style={styles.inputLabel}>Floor / Section</Text>
+              {/* 📋 Form Inputs according to calculation mode */}
+              <View style={styles.modeFormWrapper}>
+                <Text style={styles.inputLabel}>Person Type / Role</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScrollRow}>
+                  {personTypes?.map((pt: PersonType) => (
+                    <Pressable
+                      key={pt.id}
+                      style={[
+                        styles.formChip,
+                        selectedPersonType === pt.Name && styles.formChipActive
+                      ]}
+                      onPress={() => {
+                        setSelectedPersonType(pt.Name);
+                        if (calcMode === 'Hour') {
+                          setRatePerHour(pt.DailyRate.toString());
+                        }
+                      }}
+                    >
+                      <Text style={[
+                        styles.formChipText,
+                        selectedPersonType === pt.Name && styles.formChipTextActive
+                      ]}>{pt.Name}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+
+                {calcMode === 'Shift' && (
+                  <View>
+                    <Text style={styles.inputLabel}>Shift Value</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScrollRow}>
-                      {siteSections?.map((sec: any) => (
+                      {shiftTypes?.map((st: ShiftType) => (
                         <Pressable
-                          key={sec.id}
+                          key={st.id}
                           style={[
                             styles.formChip,
-                            selectedSectionId === sec.id.toString() && styles.formChipActive
+                            selectedShiftType === st.ShiftType && styles.formChipActive
                           ]}
-                          onPress={() => setSelectedSectionId(sec.id.toString())}
+                          onPress={() => setSelectedShiftType(st.ShiftType)}
                         >
                           <Text style={[
                             styles.formChipText,
-                            selectedSectionId === sec.id.toString() && styles.formChipTextActive
-                          ]}>
-                            {sec.Name} {sec.RatePerSqFt ? `(₹${sec.RatePerSqFt})` : ''}
-                          </Text>
+                            selectedShiftType === st.ShiftType && styles.formChipTextActive
+                          ]}>{st.ShiftType} (×{st.ShiftMultiplier})</Text>
                         </Pressable>
                       ))}
                     </ScrollView>
-                  </View>
 
-                  <View style={styles.rowWrapper}>
-                    <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
-                      <Text style={styles.inputLabel}>Length (ft)</Text>
+                    <View style={styles.formGroup}>
+                      <Text style={styles.inputLabel}>Labour Count</Text>
+                      <View style={styles.stepperContainer}>
+                        <Pressable
+                          style={styles.stepperButton}
+                          onPress={() => {
+                            const current = parseInt(labourCount) || 1;
+                            if (current > 1) {
+                              setLabourCount((current - 1).toString());
+                            }
+                          }}
+                        >
+                          <Text style={styles.stepperButtonText}>−</Text>
+                        </Pressable>
+                        <TextInput
+                          style={styles.stepperInput}
+                          value={labourCount}
+                          onChangeText={(val) => {
+                            const sanitized = val.replace(/[^0-9]/g, '');
+                            setLabourCount(sanitized);
+                          }}
+                          keyboardType="number-pad"
+                        />
+                        <Pressable
+                          style={styles.stepperButton}
+                          onPress={() => {
+                            const current = parseInt(labourCount) || 1;
+                            setLabourCount((current + 1).toString());
+                          }}
+                        >
+                          <Text style={styles.stepperButtonText}>+</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {calcMode === 'Hour' && (
+                  <View style={{ marginTop: 14 }}>
+                    <View style={styles.rowWrapper}>
+                      <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
+                        <Text style={styles.inputLabel}>Hours</Text>
+                        <TextInput
+                          style={styles.textInputStyle}
+                          value={hours}
+                          onChangeText={setHours}
+                          placeholder="Hours"
+                          placeholderTextColor={colors.dark.textMuted}
+                          keyboardType="numeric"
+                        />
+                      </View>
+                      <View style={[styles.formGroup, { flex: 1 }]}>
+                        <Text style={styles.inputLabel}>Rate/Hour (₹)</Text>
+                        <TextInput
+                          style={styles.textInputStyle}
+                          value={ratePerHour}
+                          onChangeText={setRatePerHour}
+                          placeholder="Rate/Hr"
+                          placeholderTextColor={colors.dark.textMuted}
+                          keyboardType="numeric"
+                        />
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {calcMode === 'SqFt' && (
+                  <View style={{ marginTop: 14 }}>
+                    <View style={styles.formGroup}>
+                      <Text style={styles.inputLabel}>Floor / Section</Text>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScrollRow}>
+                        {siteSections?.map((sec: any) => (
+                          <Pressable
+                            key={sec.id}
+                            style={[
+                              styles.formChip,
+                              selectedSectionId === sec.id.toString() && styles.formChipActive
+                            ]}
+                            onPress={() => setSelectedSectionId(sec.id.toString())}
+                          >
+                            <Text style={[
+                              styles.formChipText,
+                              selectedSectionId === sec.id.toString() && styles.formChipTextActive
+                            ]}>
+                              {sec.Name} {sec.RatePerSqFt ? `(₹${sec.RatePerSqFt})` : ''}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </ScrollView>
+                    </View>
+
+                    <View style={styles.rowWrapper}>
+                      <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
+                        <Text style={styles.inputLabel}>Length (ft)</Text>
+                        <TextInput
+                          style={styles.textInputStyle}
+                          value={length}
+                          onChangeText={setLength}
+                          placeholder="Length"
+                          placeholderTextColor={colors.dark.textMuted}
+                          keyboardType="numeric"
+                        />
+                      </View>
+                      <View style={[styles.formGroup, { flex: 1 }]}>
+                        <Text style={styles.inputLabel}>Breadth (ft)</Text>
+                        <TextInput
+                          style={styles.textInputStyle}
+                          value={breadth}
+                          onChangeText={setBreadth}
+                          placeholder="Breadth"
+                          placeholderTextColor={colors.dark.textMuted}
+                          keyboardType="numeric"
+                        />
+                      </View>
+                    </View>
+
+                    <View style={[styles.formGroup, { marginTop: 8 }]}>
+                      <Text style={styles.inputLabel}>Rate per SqFt (₹)</Text>
                       <TextInput
                         style={styles.textInputStyle}
-                        value={length}
-                        onChangeText={setLength}
-                        placeholder="Length"
+                        value={ratePerSqFt}
+                        onChangeText={setRatePerSqFt}
+                        placeholder="Rate per SqFt"
                         placeholderTextColor={colors.dark.textMuted}
                         keyboardType="numeric"
                       />
                     </View>
-                    <View style={[styles.formGroup, { flex: 1 }]}>
-                      <Text style={styles.inputLabel}>Breadth (ft)</Text>
-                      <TextInput
-                        style={styles.textInputStyle}
-                        value={breadth}
-                        onChangeText={setBreadth}
-                        placeholder="Breadth"
-                        placeholderTextColor={colors.dark.textMuted}
-                        keyboardType="numeric"
-                      />
-                    </View>
                   </View>
+                )}
 
-                  <View style={[styles.formGroup, { marginTop: 8 }]}>
-                    <Text style={styles.inputLabel}>Rate per SqFt (₹)</Text>
+                <Pressable
+                  style={[
+                    styles.submitButton,
+                    (!selectedPayeeId || !selectedSiteId) && styles.submitButtonDisabled
+                  ]}
+                  onPress={() => saveRecordMutation.mutate()}
+                  disabled={saveRecordMutation.isPending || !selectedPayeeId || !selectedSiteId}
+                >
+                  {saveRecordMutation.isPending ? (
+                    <ActivityIndicator color="#0F0F1A" />
+                  ) : (
+                    <Text style={styles.submitButtonText}>Save Daily Entry</Text>
+                  )}
+                </Pressable>
+              </View>
+            </View>
+          )}
+
+          {activeTab === 'misc' && (
+            <View style={{ marginTop: 10 }}>
+              {/* Mason Salary Profit Card */}
+              <View style={styles.profitCard}>
+                <View style={styles.profitHeaderRow}>
+                  <TrendingUp color="#4CAF50" size={16} />
+                  <Text style={styles.profitHeaderTitle}>Mason Salary Profit for this Site</Text>
+                </View>
+                <View style={styles.profitDetailRow}>
+                  <Text style={styles.profitDetailLabel}>Weekly Site Attendance:</Text>
+                  <Text style={styles.profitDetailValue}>₹{getWeeklySiteAttendance().toLocaleString('en-IN')}</Text>
+                </View>
+
+                <View style={styles.rowWrapper}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
+                    <Text style={styles.inputLabel}>Profit (%)</Text>
                     <TextInput
                       style={styles.textInputStyle}
-                      value={ratePerSqFt}
-                      onChangeText={setRatePerSqFt}
-                      placeholder="Rate per SqFt"
+                      value={profitPercent}
+                      onChangeText={handlePercentChange}
+                      placeholder="e.g. 10"
+                      placeholderTextColor={colors.dark.textMuted}
+                      keyboardType="numeric"
+                    />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.inputLabel}>Profit Value (₹)</Text>
+                    <TextInput
+                      style={styles.textInputStyle}
+                      value={profitAmount}
+                      onChangeText={setProfitAmount}
+                      placeholder="e.g. 300"
                       placeholderTextColor={colors.dark.textMuted}
                       keyboardType="numeric"
                     />
                   </View>
                 </View>
-              )}
 
-              <Pressable
-                style={[
-                  styles.submitButton,
-                  (!selectedPayeeId || !selectedSiteId) && styles.submitButtonDisabled
-                ]}
-                onPress={() => saveRecordMutation.mutate()}
-                disabled={saveRecordMutation.isPending || !selectedPayeeId || !selectedSiteId}
-              >
-                {saveRecordMutation.isPending ? (
-                  <ActivityIndicator color="#0F0F1A" />
-                ) : (
-                  <Text style={styles.submitButtonText}>Save Daily Entry</Text>
-                )}
-              </Pressable>
-            </View>
-          </View>
-        )}
+                {profitPercent ? (
+                  <Text style={styles.calcFormulaText}>
+                    Calculation: ₹{getWeeklySiteAttendance().toLocaleString('en-IN')} × {profitPercent}% = ₹{((getWeeklySiteAttendance() * (parseFloat(profitPercent) || 0)) / 100).toLocaleString('en-IN')}
+                  </Text>
+                ) : null}
 
-        {activeTab === 'misc' && (
-          <View style={{ marginTop: 10 }}>
-            {/* Mason Salary Profit Card */}
-            <View style={styles.profitCard}>
-              <View style={styles.profitHeaderRow}>
-                <TrendingUp color="#4CAF50" size={16} />
-                <Text style={styles.profitHeaderTitle}>Mason Salary Profit for this Site</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+                  <Pressable
+                    style={[styles.saveProfitBtn, saveMiscMutation.isPending && { opacity: 0.7 }]}
+                    onPress={handleSaveProfit}
+                    disabled={saveMiscMutation.isPending}
+                  >
+                    <Text style={styles.saveProfitBtnText}>
+                      {saveMiscMutation.isPending ? 'Saving...' : 'Save Profit'}
+                    </Text>
+                  </Pressable>
+                  {getMiscItems().find((m: any) => m.name.startsWith('Mason Profit')) ? (
+                    <Pressable
+                      style={styles.removeProfitBtn}
+                      onPress={() => {
+                        const item = getMiscItems().find((m: any) => m.name.startsWith('Mason Profit'));
+                        if (item) deleteMiscMutation.mutate(item.id);
+                      }}
+                    >
+                      <Text style={styles.removeProfitBtnText}>Remove</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
               </View>
-              <View style={styles.profitDetailRow}>
-                <Text style={styles.profitDetailLabel}>Weekly Site Attendance:</Text>
-                <Text style={styles.profitDetailValue}>₹{getWeeklySiteAttendance().toLocaleString('en-IN')}</Text>
+
+              {/* Auto-calculated Allowances */}
+              {(() => {
+                const teaRate = parseFloat(masterSettings?.TeaExpense) || 20;
+                const busRate = parseFloat(masterSettings?.BusExpense) || 50;
+                const labourCountWeekly = getWeeklySiteLabourCount();
+                const teaTotal = labourCountWeekly * teaRate;
+                const busTotal = labourCountWeekly * busRate;
+
+                const isTeaAdded = getMiscItems().some((m: any) => m.name === 'Tea Charges');
+                const isBusAdded = getMiscItems().some((m: any) => m.name === 'Bus Charges');
+
+                if (labourCountWeekly > 0 && (!isTeaAdded || !isBusAdded)) {
+                  return (
+                    <View style={styles.allowanceCard}>
+                      <Text style={styles.allowanceTitle}>
+                        ☕ Auto Allowances (Weekly: {labourCountWeekly} workers)
+                      </Text>
+                      <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                        {!isTeaAdded && (
+                          <Pressable
+                            style={styles.allowanceBtn}
+                            onPress={() => saveMiscMutation.mutate({ name: 'Tea Charges', amount: teaTotal })}
+                          >
+                            <Text style={styles.allowanceBtnText}>Add Tea (₹{teaTotal})</Text>
+                          </Pressable>
+                        )}
+                        {!isBusAdded && (
+                          <Pressable
+                            style={styles.allowanceBtn}
+                            onPress={() => saveMiscMutation.mutate({ name: 'Bus Charges', amount: busTotal })}
+                          >
+                            <Text style={styles.allowanceBtnText}>Add Bus (₹{busTotal})</Text>
+                          </Pressable>
+                        )}
+                      </View>
+                    </View>
+                  );
+                }
+                return null;
+              })()}
+
+              {/* Add Manual Misc Charge Form */}
+              <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: colors.dark.border, paddingTop: 16 }}>
+                <Text style={styles.cardHeaderTitle}>Add Misc Charge</Text>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Description</Text>
+                  <TextInput
+                    style={styles.textInputStyle}
+                    value={newMiscName}
+                    onChangeText={setNewMiscName}
+                    placeholder="e.g. Travel, Tea Expense"
+                    placeholderTextColor={colors.dark.textMuted}
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Amount (₹)</Text>
+                  <TextInput
+                    style={styles.textInputStyle}
+                    value={newMiscAmount}
+                    onChangeText={setNewMiscAmount}
+                    placeholder="0"
+                    placeholderTextColor={colors.dark.textMuted}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <Pressable
+                  style={[
+                    styles.submitButtonMisc,
+                    (!newMiscName || !newMiscAmount || !selectedPayeeId || !selectedSiteId) && styles.submitButtonDisabled
+                  ]}
+                  onPress={() => saveMiscMutation.mutate({ name: newMiscName, amount: parseFloat(newMiscAmount) || 0 })}
+                  disabled={saveMiscMutation.isPending || !newMiscName || !newMiscAmount || !selectedPayeeId || !selectedSiteId}
+                >
+                  <Text style={styles.submitButtonText}>+ Add Misc Charge</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+
+          {activeTab === 'lifting' && (
+            <View style={{ marginTop: 10 }}>
+              {/* Log Lifting Work Form */}
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>Material Type</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScrollRow}>
+                  {['M.Sand', 'Jally', 'Sengal'].map((mat) => (
+                    <Pressable
+                      key={mat}
+                      style={[
+                        styles.formChip,
+                        newLiftingMat === mat && styles.formChipActiveLifting
+                      ]}
+                      onPress={() => setNewLiftingMat(mat)}
+                    >
+                      <Text style={[
+                        styles.formChipText,
+                        newLiftingMat === mat && styles.formChipTextActiveLifting
+                      ]}>{mat}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>Floor Level</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScrollRow}>
+                  {['G.Floor', '1st floor', '2nd floor', '3rd floor'].map((floor) => (
+                    <Pressable
+                      key={floor}
+                      style={[
+                        styles.formChip,
+                        newLiftingFloor === floor && styles.formChipActiveLifting
+                      ]}
+                      onPress={() => setNewLiftingFloor(floor)}
+                    >
+                      <Text style={[
+                        styles.formChipText,
+                        newLiftingFloor === floor && styles.formChipTextActiveLifting
+                      ]}>{floor}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
               </View>
 
               <View style={styles.rowWrapper}>
                 <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
-                  <Text style={styles.inputLabel}>Profit (%)</Text>
+                  <Text style={styles.inputLabel}>Qty / Pcs</Text>
                   <TextInput
                     style={styles.textInputStyle}
-                    value={profitPercent}
-                    onChangeText={handlePercentChange}
-                    placeholder="e.g. 10"
+                    value={newLiftingQty}
+                    onChangeText={setNewLiftingQty}
+                    placeholder="Quantity"
                     placeholderTextColor={colors.dark.textMuted}
                     keyboardType="numeric"
                   />
                 </View>
                 <View style={[styles.formGroup, { flex: 1 }]}>
-                  <Text style={styles.inputLabel}>Profit Value (₹)</Text>
+                  <Text style={styles.inputLabel}>Rate (₹)</Text>
                   <TextInput
                     style={styles.textInputStyle}
-                    value={profitAmount}
-                    onChangeText={setProfitAmount}
-                    placeholder="e.g. 300"
+                    value={newLiftingRate}
+                    onChangeText={setNewLiftingRate}
+                    placeholder="Rate"
                     placeholderTextColor={colors.dark.textMuted}
                     keyboardType="numeric"
                   />
                 </View>
               </View>
 
-              {profitPercent ? (
-                <Text style={styles.calcFormulaText}>
-                  Calculation: ₹{getWeeklySiteAttendance().toLocaleString('en-IN')} × {profitPercent}% = ₹{((getWeeklySiteAttendance() * (parseFloat(profitPercent) || 0)) / 100).toLocaleString('en-IN')}
+              {newLiftingRate ? (
+                <Text style={styles.calcFormulaTextLifting}>
+                  Calculation: {newLiftingQty || '0'} units/pcs × ₹{newLiftingRate} = ₹{(parseFloat(newLiftingQty || '0') * parseFloat(newLiftingRate || '0')).toLocaleString('en-IN')}
                 </Text>
               ) : null}
 
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-                <Pressable
-                  style={[styles.saveProfitBtn, saveMiscMutation.isPending && { opacity: 0.7 }]}
-                  onPress={handleSaveProfit}
-                  disabled={saveMiscMutation.isPending}
-                >
-                  <Text style={styles.saveProfitBtnText}>
-                    {saveMiscMutation.isPending ? 'Saving...' : 'Save Profit'}
-                  </Text>
-                </Pressable>
-                {getMiscItems().find((m: any) => m.name.startsWith('Mason Profit')) ? (
-                  <Pressable
-                    style={styles.removeProfitBtn}
-                    onPress={() => {
-                      const item = getMiscItems().find((m: any) => m.name.startsWith('Mason Profit'));
-                      if (item) deleteMiscMutation.mutate(item.id);
-                    }}
-                  >
-                    <Text style={styles.removeProfitBtnText}>Remove</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            </View>
-
-            {/* Auto-calculated Allowances */}
-            {(() => {
-              const teaRate = parseFloat(masterSettings?.TeaExpense) || 20;
-              const busRate = parseFloat(masterSettings?.BusExpense) || 50;
-              const labourCountWeekly = getWeeklySiteLabourCount();
-              const teaTotal = labourCountWeekly * teaRate;
-              const busTotal = labourCountWeekly * busRate;
-
-              const isTeaAdded = getMiscItems().some((m: any) => m.name === 'Tea Charges');
-              const isBusAdded = getMiscItems().some((m: any) => m.name === 'Bus Charges');
-
-              if (labourCountWeekly > 0 && (!isTeaAdded || !isBusAdded)) {
-                return (
-                  <View style={styles.allowanceCard}>
-                    <Text style={styles.allowanceTitle}>
-                      ☕ Auto Allowances (Weekly: {labourCountWeekly} workers)
-                    </Text>
-                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-                      {!isTeaAdded && (
-                        <Pressable
-                          style={styles.allowanceBtn}
-                          onPress={() => saveMiscMutation.mutate({ name: 'Tea Charges', amount: teaTotal })}
-                        >
-                          <Text style={styles.allowanceBtnText}>Add Tea (₹{teaTotal})</Text>
-                        </Pressable>
-                      )}
-                      {!isBusAdded && (
-                        <Pressable
-                          style={styles.allowanceBtn}
-                          onPress={() => saveMiscMutation.mutate({ name: 'Bus Charges', amount: busTotal })}
-                        >
-                          <Text style={styles.allowanceBtnText}>Add Bus (₹{busTotal})</Text>
-                        </Pressable>
-                      )}
-                    </View>
-                  </View>
-                );
-              }
-              return null;
-            })()}
-
-            {/* Add Manual Misc Charge Form */}
-            <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: colors.dark.border, paddingTop: 16 }}>
-              <Text style={styles.cardHeaderTitle}>Add Misc Charge</Text>
-              
-              <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>Description</Text>
-                <TextInput
-                  style={styles.textInputStyle}
-                  value={newMiscName}
-                  onChangeText={setNewMiscName}
-                  placeholder="e.g. Travel, Tea Expense"
-                  placeholderTextColor={colors.dark.textMuted}
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>Amount (₹)</Text>
-                <TextInput
-                  style={styles.textInputStyle}
-                  value={newMiscAmount}
-                  onChangeText={setNewMiscAmount}
-                  placeholder="0"
-                  placeholderTextColor={colors.dark.textMuted}
-                  keyboardType="numeric"
-                />
-              </View>
-
               <Pressable
                 style={[
-                  styles.submitButtonMisc,
-                  (!newMiscName || !newMiscAmount || !selectedPayeeId || !selectedSiteId) && styles.submitButtonDisabled
+                  styles.submitButtonLifting,
+                  (!newLiftingQty || !newLiftingRate || !selectedPayeeId || !selectedSiteId) && styles.submitButtonDisabled
                 ]}
-                onPress={() => saveMiscMutation.mutate({ name: newMiscName, amount: parseFloat(newMiscAmount) || 0 })}
-                disabled={saveMiscMutation.isPending || !newMiscName || !newMiscAmount || !selectedPayeeId || !selectedSiteId}
+                onPress={() => saveLiftingMutation.mutate()}
+                disabled={saveLiftingMutation.isPending || !newLiftingQty || !newLiftingRate || !selectedPayeeId || !selectedSiteId}
               >
-                <Text style={styles.submitButtonText}>+ Add Misc Charge</Text>
+                <Text style={styles.submitButtonText}>+ Log Lifting Work</Text>
               </Pressable>
             </View>
-          </View>
-        )}
-
-        {activeTab === 'lifting' && (
-          <View style={{ marginTop: 10 }}>
-            {/* Log Lifting Work Form */}
-            <View style={styles.formGroup}>
-              <Text style={styles.inputLabel}>Material Type</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScrollRow}>
-                {['M.Sand', 'Jally', 'Sengal'].map((mat) => (
-                  <Pressable
-                    key={mat}
-                    style={[
-                      styles.formChip,
-                      newLiftingMat === mat && styles.formChipActiveLifting
-                    ]}
-                    onPress={() => setNewLiftingMat(mat)}
-                  >
-                    <Text style={[
-                      styles.formChipText,
-                      newLiftingMat === mat && styles.formChipTextActiveLifting
-                    ]}>{mat}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.inputLabel}>Floor Level</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScrollRow}>
-                {['G.Floor', '1st floor', '2nd floor', '3rd floor'].map((floor) => (
-                  <Pressable
-                    key={floor}
-                    style={[
-                      styles.formChip,
-                      newLiftingFloor === floor && styles.formChipActiveLifting
-                    ]}
-                    onPress={() => setNewLiftingFloor(floor)}
-                  >
-                    <Text style={[
-                      styles.formChipText,
-                      newLiftingFloor === floor && styles.formChipTextActiveLifting
-                    ]}>{floor}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
-
-            <View style={styles.rowWrapper}>
-              <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
-                <Text style={styles.inputLabel}>Qty / Pcs</Text>
-                <TextInput
-                  style={styles.textInputStyle}
-                  value={newLiftingQty}
-                  onChangeText={setNewLiftingQty}
-                  placeholder="Quantity"
-                  placeholderTextColor={colors.dark.textMuted}
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={[styles.formGroup, { flex: 1 }]}>
-                <Text style={styles.inputLabel}>Rate (₹)</Text>
-                <TextInput
-                  style={styles.textInputStyle}
-                  value={newLiftingRate}
-                  onChangeText={setNewLiftingRate}
-                  placeholder="Rate"
-                  placeholderTextColor={colors.dark.textMuted}
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            {newLiftingRate ? (
-              <Text style={styles.calcFormulaTextLifting}>
-                Calculation: {newLiftingQty || '0'} units/pcs × ₹{newLiftingRate} = ₹{(parseFloat(newLiftingQty || '0') * parseFloat(newLiftingRate || '0')).toLocaleString('en-IN')}
-              </Text>
-            ) : null}
-
-            <Pressable
-              style={[
-                styles.submitButtonLifting,
-                (!newLiftingQty || !newLiftingRate || !selectedPayeeId || !selectedSiteId) && styles.submitButtonDisabled
-              ]}
-              onPress={() => saveLiftingMutation.mutate()}
-              disabled={saveLiftingMutation.isPending || !newLiftingQty || !newLiftingRate || !selectedPayeeId || !selectedSiteId}
-            >
-              <Text style={styles.submitButtonText}>+ Log Lifting Work</Text>
-            </Pressable>
-          </View>
-        )}
-      </View>
-
-      {/* 📊 Cell Log Summary Card */}
-      {selectedSiteId && selectedPayeeId ? (
-        <View>
-          {activeTab === 'attendance' && (
-            <View style={styles.card}>
-              <View style={styles.summaryTitleRow}>
-                <View>
-                  <Text style={styles.cardHeaderTitle}>Logs Registered</Text>
-                  <Text style={styles.cardHeaderSubtitle}>Reviewing {activeSiteName} - {activePayeeName}</Text>
-                </View>
-                <Text style={styles.accentVal}>₹{getSelectedCellTotal().toLocaleString('en-IN')}</Text>
-              </View>
-
-              {getSelectedCellRecords().length > 0 ? (
-                getSelectedCellRecords().map((rec: any) => (
-                  <View key={rec.id} style={styles.recordListRow}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.recTitle}>
-                        {rec.personType} — {rec.calculationMode === 'Shift' ? `${rec.shiftType} Shift` : `${rec.calculationMode} mode`}
-                      </Text>
-                      <Text style={styles.recMuted}>
-                        {rec.calculationMode === 'Shift' && `Multiplier: ${rec.shiftMultiplier} | Count: ${rec.labourCount}`}
-                        {rec.calculationMode === 'Hour' && `${rec.hours} Hrs @ ₹${rec.ratePerHour}/Hr`}
-                        {rec.calculationMode === 'SqFt' && `${rec.length}×${rec.breadth} ft @ ₹${rec.ratePerSqFt}/SqFt`}
-                      </Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Text style={styles.recAmt}>₹{rec.calculatedAmount.toLocaleString('en-IN')}</Text>
-                      <Pressable style={styles.trashBtn} onPress={() => deleteRecordMutation.mutate(rec.id)}>
-                        <Trash2 color={colors.dark.error} size={15} />
-                      </Pressable>
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.noLogsPlaceholder}>No attendance registered for this date</Text>
-              )}
-            </View>
           )}
-
-          {activeTab === 'misc' && (
-            <View style={styles.card}>
-              <View style={styles.summaryTitleRow}>
-                <View>
-                  <Text style={styles.cardHeaderTitle}>Site Misc Charges</Text>
-                  <Text style={styles.cardHeaderSubtitle}>Reviewing {activeSiteName} - {activePayeeName}</Text>
-                </View>
-                <Text style={[styles.accentVal, { color: '#00BCD4' }]}>
-                  ₹{getMiscItems().reduce((sum: number, m: any) => sum + m.amount, 0).toLocaleString('en-IN')}
-                </Text>
-              </View>
-
-              {getMiscItems().length > 0 ? (
-                getMiscItems().map((m: any) => (
-                  <View key={m.id} style={styles.recordListRow}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.recTitle}>{m.name}</Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Text style={[styles.recAmt, { color: '#00BCD4' }]}>₹{m.amount.toLocaleString('en-IN')}</Text>
-                      <Pressable style={styles.trashBtn} onPress={() => deleteMiscMutation.mutate(m.id)}>
-                        <Trash2 color={colors.dark.error} size={15} />
-                      </Pressable>
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.noLogsPlaceholder}>No misc charges logged for this site</Text>
-              )}
-            </View>
-          )}
-
-          {activeTab === 'lifting' && (
-            <View style={styles.card}>
-              <View style={styles.summaryTitleRow}>
-                <View>
-                  <Text style={styles.cardHeaderTitle}>Logged Lifting Work</Text>
-                  <Text style={styles.cardHeaderSubtitle}>Reviewing {activeSiteName} - {activePayeeName} for {entryDate}</Text>
-                </View>
-                <Text style={[styles.accentVal, { color: '#E91E63' }]}>
-                  ₹{getSelectedLiftingRecords().reduce((sum: number, r: any) => sum + r.Amount, 0).toLocaleString('en-IN')}
-                </Text>
-              </View>
-
-              {getSelectedLiftingRecords().length > 0 ? (
-                getSelectedLiftingRecords().map((rec: any) => (
-                  <View key={rec.id} style={styles.recordListRow}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.recTitle}>{rec.MaterialType} — {rec.Floor}</Text>
-                      <Text style={styles.recMuted}>Qty: {rec.Quantity} | Rate: ₹{rec.Rate}/unit</Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Text style={[styles.recAmt, { color: '#E91E63' }]}>₹{rec.Amount.toLocaleString('en-IN')}</Text>
-                      <Pressable style={styles.trashBtn} onPress={() => deleteLiftingMutation.mutate(rec.id)}>
-                        <Trash2 color={colors.dark.error} size={15} />
-                      </Pressable>
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.noLogsPlaceholder}>No material lifting logged for this date</Text>
-              )}
-            </View>
-          )}
-
-          {/* 🧾 Combined Weekly Site Total */}
-          <View style={styles.combinedTotalBanner}>
-            <Text style={styles.combinedTotalLabel}>Combined Site Total (Weekly)</Text>
-            <Text style={styles.combinedTotalValue}>
-              ₹{(
-                getWeeklySiteAttendance() + 
-                getMiscItems().reduce((sum: number, m: any) => sum + m.amount, 0) +
-                getWeeklyLiftingTotal()
-              ).toLocaleString('en-IN')}
-            </Text>
-          </View>
         </View>
-      ) : null}
-      {isDatePickerVisible && (
-        <DateTimePicker
-          value={getInitialDatePickerDate()}
-          mode="date"
-          display="default"
-          onValueChange={(event, date) => {
-            if (date) {
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, '0');
-              const day = String(date.getDate()).padStart(2, '0');
-              setEntryDate(`${year}-${month}-${day}`);
-            }
-            setDatePickerVisibility(false);
-          }}
-          onDismiss={() => {
-            setDatePickerVisibility(false);
-          }}
-        />
-      )}
 
-      {/* 🧾 Create Sheet Modal */}
-      <Modal
-        visible={isCreateSheetVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsCreateSheetVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.bottomSheet}>
-            <View style={styles.bottomSheetHeader}>
-              <Text style={styles.bottomSheetTitle}>Create New Attendance Sheet</Text>
-              <Pressable style={styles.closeSheetBtn} onPress={() => setIsCreateSheetVisible(false)}>
-                <X color={colors.dark.textSecondary} size={20} />
-              </Pressable>
-            </View>
-
-            <ScrollView style={{ marginBottom: 20 }}>
-              <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>Sheet Title</Text>
-                <View style={[styles.masterInputContainer, { maxWidth: 250 }]}>
-                  <TextInput
-                    style={styles.masterTextInput}
-                    value={newSheetTitle}
-                    onChangeText={setNewSheetTitle}
-                    placeholder="e.g. Week 30 - July 2026"
-                    placeholderTextColor={colors.dark.textMuted}
-                  />
+        {/* 📊 Cell Log Summary Card */}
+        {selectedSiteId && selectedPayeeId ? (
+          <View>
+            {activeTab === 'attendance' && (
+              <View style={styles.card}>
+                <View style={styles.summaryTitleRow}>
+                  <View>
+                    <Text style={styles.cardHeaderTitle}>Logs Registered</Text>
+                    <Text style={styles.cardHeaderSubtitle}>Reviewing {activeSiteName} - {activePayeeName}</Text>
+                  </View>
+                  <Text style={styles.accentVal}>₹{getSelectedCellTotal().toLocaleString('en-IN')}</Text>
                 </View>
-              </View>
 
-              <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>Week Start Date (YYYY-MM-DD)</Text>
-                {Platform.OS === 'web' ? (
-                  <View style={[styles.dateInputContainer, { maxWidth: 250 }]}>
-                    <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
-                    <Text style={styles.dropdownSelectedText}>{newSheetStartDate}</Text>
-                    <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
-                    <input
-                      type="date"
-                      value={newSheetStartDate}
-                      onChange={(e) => {
-                        const dateVal = e.target.value;
-                        setNewSheetStartDate(dateVal);
-                        if (dateVal) {
-                          const d = new Date(dateVal);
-                          d.setDate(d.getDate() + 6);
-                          setNewSheetEndDate(d.toISOString().split('T')[0]);
-                        }
-                      }}
-                      onClick={(e: any) => {
-                        try {
-                          e.currentTarget.showPicker();
-                        } catch (err) {}
-                      }}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        opacity: 0,
-                        cursor: 'pointer',
-                        border: 'none',
-                        zIndex: 99,
-                      }}
-                    />
-                  </View>
+                {getSelectedCellRecords().length > 0 ? (
+                  getSelectedCellRecords().map((rec: any) => (
+                    <View key={rec.id} style={styles.recordListRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.recTitle}>
+                          {rec.personType} — {rec.calculationMode === 'Shift' ? `${rec.shiftType} Shift` : `${rec.calculationMode} mode`}
+                        </Text>
+                        <Text style={styles.recMuted}>
+                          {rec.calculationMode === 'Shift' && `Multiplier: ${rec.shiftMultiplier} | Count: ${rec.labourCount}`}
+                          {rec.calculationMode === 'Hour' && `${rec.hours} Hrs @ ₹${rec.ratePerHour}/Hr`}
+                          {rec.calculationMode === 'SqFt' && `${rec.length}×${rec.breadth} ft @ ₹${rec.ratePerSqFt}/SqFt`}
+                        </Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={styles.recAmt}>₹{rec.calculatedAmount.toLocaleString('en-IN')}</Text>
+                        <Pressable style={styles.trashBtn} onPress={() => deleteRecordMutation.mutate(rec.id)}>
+                          <Trash2 color={colors.dark.error} size={15} />
+                        </Pressable>
+                      </View>
+                    </View>
+                  ))
                 ) : (
-                  <View style={[styles.masterInputContainer, { maxWidth: 250 }]}>
-                    <TextInput
-                      style={styles.masterTextInput}
-                      value={newSheetStartDate}
-                      onChangeText={setNewSheetStartDate}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={colors.dark.textMuted}
-                    />
-                  </View>
+                  <Text style={styles.noLogsPlaceholder}>No attendance registered for this date</Text>
                 )}
               </View>
+            )}
 
-              <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>Week End Date (YYYY-MM-DD)</Text>
-                {Platform.OS === 'web' ? (
-                  <View style={[styles.dateInputContainer, { maxWidth: 250 }]}>
-                    <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
-                    <Text style={styles.dropdownSelectedText}>{newSheetEndDate}</Text>
-                    <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
-                    <input
-                      type="date"
-                      value={newSheetEndDate}
-                      onChange={(e) => setNewSheetEndDate(e.target.value)}
-                      onClick={(e: any) => {
-                        try {
-                          e.currentTarget.showPicker();
-                        } catch (err) {}
-                      }}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        opacity: 0,
-                        cursor: 'pointer',
-                        border: 'none',
-                        zIndex: 99,
-                      }}
-                    />
+            {activeTab === 'misc' && (
+              <View style={styles.card}>
+                <View style={styles.summaryTitleRow}>
+                  <View>
+                    <Text style={styles.cardHeaderTitle}>Site Misc Charges</Text>
+                    <Text style={styles.cardHeaderSubtitle}>Reviewing {activeSiteName} - {activePayeeName}</Text>
                   </View>
-                ) : (
-                  <View style={[styles.masterInputContainer, { maxWidth: 250 }]}>
-                    <TextInput
-                      style={styles.masterTextInput}
-                      value={newSheetEndDate}
-                      onChangeText={setNewSheetEndDate}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={colors.dark.textMuted}
-                    />
-                  </View>
-                )}
-              </View>
-            </ScrollView>
-
-            <Pressable
-              style={[
-                styles.submitButtonLifting,
-                (!newSheetTitle || !newSheetStartDate || !newSheetEndDate) && styles.submitButtonDisabled
-              ]}
-              onPress={() => saveSheetMutation.mutate()}
-              disabled={saveSheetMutation.isPending || !newSheetTitle || !newSheetStartDate || !newSheetEndDate}
-            >
-              <Text style={styles.submitButtonText}>
-                {saveSheetMutation.isPending ? 'Creating...' : 'Create Sheet'}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-
-      {/* ⚙️ Master Settings Modal */}
-      <Modal
-        visible={isMasterSettingsVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsMasterSettingsVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.bottomSheet}>
-            <View style={styles.bottomSheetHeader}>
-              <Text style={styles.bottomSheetTitle}>Manage Master Settings</Text>
-              <Pressable style={styles.closeSheetBtn} onPress={() => setIsMasterSettingsVisible(false)}>
-                <X color={colors.dark.textSecondary} size={20} />
-              </Pressable>
-            </View>
-
-            <ScrollView style={{ marginBottom: 20 }}>
-              <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>Tea Charges per day (₹)</Text>
-                <View style={styles.masterInputContainer}>
-                  <TextInput
-                    style={styles.masterTextInput}
-                    value={editingMaster.TeaExpense}
-                    onChangeText={(val) => setEditingMaster({ ...editingMaster, TeaExpense: val })}
-                    placeholder="e.g. 20"
-                    placeholderTextColor={colors.dark.textMuted}
-                    keyboardType="numeric"
-                  />
-                </View>
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>Bus Charges per day (₹)</Text>
-                <View style={styles.masterInputContainer}>
-                  <TextInput
-                    style={styles.masterTextInput}
-                    value={editingMaster.BusExpense}
-                    onChangeText={(val) => setEditingMaster({ ...editingMaster, BusExpense: val })}
-                    placeholder="e.g. 50"
-                    placeholderTextColor={colors.dark.textMuted}
-                    keyboardType="numeric"
-                  />
-                </View>
-              </View>
-            </ScrollView>
-
-            <Pressable
-              style={[
-                styles.submitButtonLifting,
-                saveMasterSettingsMutation.isPending && styles.submitButtonDisabled
-              ]}
-              onPress={() => saveMasterSettingsMutation.mutate()}
-              disabled={saveMasterSettingsMutation.isPending}
-            >
-              <Text style={styles.submitButtonText}>
-                {saveMasterSettingsMutation.isPending ? 'Saving...' : 'Save Settings'}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-
-      {/* 🧱 Lifting Rates Modal */}
-      <Modal
-        visible={isLiftingRatesVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsLiftingRatesVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.bottomSheet}>
-            <View style={styles.bottomSheetHeader}>
-              <Text style={styles.bottomSheetTitle}>Manage Lifting Rates (₹)</Text>
-              <Pressable style={styles.closeSheetBtn} onPress={() => setIsLiftingRatesVisible(false)}>
-                <X color={colors.dark.textSecondary} size={20} />
-              </Pressable>
-            </View>
-
-            {/* Material Tabs Selector */}
-            <View style={styles.materialTabsContainer}>
-              {(['M.Sand', 'Jally', 'Sengal'] as const).map((mat) => (
-                <Pressable
-                  key={mat}
-                  style={[
-                    styles.materialTabButton,
-                    selectedLiftingMaterial === mat && styles.materialTabButtonActive
-                  ]}
-                  onPress={() => setSelectedLiftingMaterial(mat)}
-                >
-                  <Text
-                    style={[
-                      styles.materialTabButtonText,
-                      selectedLiftingMaterial === mat && styles.materialTabButtonTextActive
-                    ]}
-                  >
-                    {mat}
+                  <Text style={[styles.accentVal, { color: '#00BCD4' }]}>
+                    ₹{getMiscItems().reduce((sum: number, m: any) => sum + m.amount, 0).toLocaleString('en-IN')}
                   </Text>
-                </Pressable>
-              ))}
-            </View>
+                </View>
 
-            <ScrollView style={{ marginBottom: 20 }}>
-              {/* Rows for each floor for the selected material */}
-              {['G.Floor', '1st floor', '2nd floor', '3rd floor'].map((floor) => {
-                const key = `${selectedLiftingMaterial}_${floor}`;
-                const val = editingLiftingRates[key] || '0';
-                return (
-                  <View key={floor} style={styles.liftingRateRow}>
-                    <Text style={styles.liftingFloorLabel}>{floor}</Text>
-                    <View style={styles.liftingInputWrapper}>
-                      <Text style={styles.currencyPrefix}>₹</Text>
-                      <TextInput
-                        style={styles.liftingTextInput}
-                        value={val}
-                        onChangeText={(text) => {
-                          setEditingLiftingRates({
-                            ...editingLiftingRates,
-                            [key]: text
-                          });
+                {getMiscItems().length > 0 ? (
+                  getMiscItems().map((m: any) => (
+                    <View key={m.id} style={styles.recordListRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.recTitle}>{m.name}</Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={[styles.recAmt, { color: '#00BCD4' }]}>₹{m.amount.toLocaleString('en-IN')}</Text>
+                        <Pressable style={styles.trashBtn} onPress={() => deleteMiscMutation.mutate(m.id)}>
+                          <Trash2 color={colors.dark.error} size={15} />
+                        </Pressable>
+                      </View>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.noLogsPlaceholder}>No misc charges logged for this site</Text>
+                )}
+              </View>
+            )}
+
+            {activeTab === 'lifting' && (
+              <View style={styles.card}>
+                <View style={styles.summaryTitleRow}>
+                  <View>
+                    <Text style={styles.cardHeaderTitle}>Logged Lifting Work</Text>
+                    <Text style={styles.cardHeaderSubtitle}>Reviewing {activeSiteName} - {activePayeeName} for {entryDate}</Text>
+                  </View>
+                  <Text style={[styles.accentVal, { color: '#bd1ee9ff' }]}>
+                    ₹{getSelectedLiftingRecords().reduce((sum: number, r: any) => sum + r.Amount, 0).toLocaleString('en-IN')}
+                  </Text>
+                </View>
+
+                {getSelectedLiftingRecords().length > 0 ? (
+                  getSelectedLiftingRecords().map((rec: any) => (
+                    <View key={rec.id} style={styles.recordListRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.recTitle}>{rec.MaterialType} — {rec.Floor}</Text>
+                        <Text style={styles.recMuted}>Qty: {rec.Quantity} | Rate: ₹{rec.Rate}/unit</Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={[styles.recAmt, { color: '#bd1ee9ff' }]}>₹{rec.Amount.toLocaleString('en-IN')}</Text>
+                        <Pressable style={styles.trashBtn} onPress={() => deleteLiftingMutation.mutate(rec.id)}>
+                          <Trash2 color={colors.dark.error} size={15} />
+                        </Pressable>
+                      </View>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.noLogsPlaceholder}>No material lifting logged for this date</Text>
+                )}
+              </View>
+            )}
+
+            {/* 🧾 Combined Weekly Site Total */}
+            <View style={styles.combinedTotalBanner}>
+              <Text style={styles.combinedTotalLabel}>Combined Site Total (Weekly)</Text>
+              <Text style={styles.combinedTotalValue}>
+                ₹{(
+                  getWeeklySiteAttendance() +
+                  getMiscItems().reduce((sum: number, m: any) => sum + m.amount, 0) +
+                  getWeeklyLiftingTotal()
+                ).toLocaleString('en-IN')}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+        {isDatePickerVisible && (
+          <DateTimePicker
+            value={getInitialDatePickerDate()}
+            mode="date"
+            display="default"
+            onValueChange={(event, date) => {
+              if (date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                setEntryDate(`${year}-${month}-${day}`);
+              }
+              setDatePickerVisibility(false);
+            }}
+            onDismiss={() => {
+              setDatePickerVisibility(false);
+            }}
+          />
+        )}
+
+        {/* 🧾 Create Sheet Modal */}
+        <Modal
+          visible={isCreateSheetVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setIsCreateSheetVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.bottomSheet}>
+              <View style={styles.bottomSheetHeader}>
+                <Text style={styles.bottomSheetTitle}>Create New Attendance Sheet</Text>
+                <Pressable style={styles.closeSheetBtn} onPress={() => setIsCreateSheetVisible(false)}>
+                  <X color={colors.dark.textSecondary} size={20} />
+                </Pressable>
+              </View>
+
+              <ScrollView style={{ marginBottom: 20 }}>
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Sheet Title</Text>
+                  <View style={[styles.masterInputContainer, { maxWidth: 250 }]}>
+                    <TextInput
+                      style={styles.masterTextInput}
+                      value={newSheetTitle}
+                      onChangeText={setNewSheetTitle}
+                      placeholder="e.g. Week 30 - July 2026"
+                      placeholderTextColor={colors.dark.textMuted}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Week Start Date (YYYY-MM-DD)</Text>
+                  {Platform.OS === 'web' ? (
+                    <View style={[styles.dateInputContainer, { maxWidth: 250 }]}>
+                      <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
+                      <Text style={styles.dropdownSelectedText}>{newSheetStartDate}</Text>
+                      <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
+                      <input
+                        type="date"
+                        value={newSheetStartDate}
+                        onChange={(e) => {
+                          const dateVal = e.target.value;
+                          setNewSheetStartDate(dateVal);
+                          if (dateVal) {
+                            const d = new Date(dateVal);
+                            d.setDate(d.getDate() + 6);
+                            setNewSheetEndDate(d.toISOString().split('T')[0]);
+                          }
                         }}
-                        keyboardType="numeric"
-                        placeholder="0"
+                        onClick={(e: any) => {
+                          try {
+                            e.currentTarget.showPicker();
+                          } catch (err) { }
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          opacity: 0,
+                          cursor: 'pointer',
+                          border: 'none',
+                          zIndex: 99,
+                        }}
+                      />
+                    </View>
+                  ) : (
+                    <View style={[styles.masterInputContainer, { maxWidth: 250 }]}>
+                      <TextInput
+                        style={styles.masterTextInput}
+                        value={newSheetStartDate}
+                        onChangeText={setNewSheetStartDate}
+                        placeholder="YYYY-MM-DD"
                         placeholderTextColor={colors.dark.textMuted}
                       />
                     </View>
-                  </View>
-                );
-              })}
-            </ScrollView>
+                  )}
+                </View>
 
-            <Pressable
-              style={[
-                styles.submitButtonLifting,
-                saveLiftingRatesMutation.isPending && styles.submitButtonDisabled
-              ]}
-              onPress={() => saveLiftingRatesMutation.mutate()}
-              disabled={saveLiftingRatesMutation.isPending}
-            >
-              <Text style={styles.submitButtonText}>
-                {saveLiftingRatesMutation.isPending ? 'Saving...' : 'Save Rates'}
-              </Text>
-            </Pressable>
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Week End Date (YYYY-MM-DD)</Text>
+                  {Platform.OS === 'web' ? (
+                    <View style={[styles.dateInputContainer, { maxWidth: 250 }]}>
+                      <Calendar color={colors.dark.textSecondary} size={16} style={{ marginRight: 8 }} />
+                      <Text style={styles.dropdownSelectedText}>{newSheetEndDate}</Text>
+                      <ChevronDown color={colors.dark.textSecondary} size={16} style={{ marginLeft: 'auto' }} />
+                      <input
+                        type="date"
+                        value={newSheetEndDate}
+                        onChange={(e) => setNewSheetEndDate(e.target.value)}
+                        onClick={(e: any) => {
+                          try {
+                            e.currentTarget.showPicker();
+                          } catch (err) { }
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          opacity: 0,
+                          cursor: 'pointer',
+                          border: 'none',
+                          zIndex: 99,
+                        }}
+                      />
+                    </View>
+                  ) : (
+                    <View style={[styles.masterInputContainer, { maxWidth: 250 }]}>
+                      <TextInput
+                        style={styles.masterTextInput}
+                        value={newSheetEndDate}
+                        onChangeText={setNewSheetEndDate}
+                        placeholder="YYYY-MM-DD"
+                        placeholderTextColor={colors.dark.textMuted}
+                      />
+                    </View>
+                  )}
+                </View>
+              </ScrollView>
+
+              <Pressable
+                style={[
+                  styles.submitButtonLifting,
+                  (!newSheetTitle || !newSheetStartDate || !newSheetEndDate) && styles.submitButtonDisabled
+                ]}
+                onPress={() => saveSheetMutation.mutate()}
+                disabled={saveSheetMutation.isPending || !newSheetTitle || !newSheetStartDate || !newSheetEndDate}
+              >
+                <Text style={styles.submitButtonText}>
+                  {saveSheetMutation.isPending ? 'Creating...' : 'Create Sheet'}
+                </Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+
+        {/* ⚙️ Master Settings Modal */}
+        <Modal
+          visible={isMasterSettingsVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setIsMasterSettingsVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.bottomSheet}>
+              <View style={styles.bottomSheetHeader}>
+                <Text style={styles.bottomSheetTitle}>Manage Master Settings</Text>
+                <Pressable style={styles.closeSheetBtn} onPress={() => setIsMasterSettingsVisible(false)}>
+                  <X color={colors.dark.textSecondary} size={20} />
+                </Pressable>
+              </View>
+
+              <ScrollView style={{ marginBottom: 20 }}>
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Tea Charges per day (₹)</Text>
+                  <View style={styles.masterInputContainer}>
+                    <TextInput
+                      style={styles.masterTextInput}
+                      value={editingMaster.TeaExpense}
+                      onChangeText={(val) => setEditingMaster({ ...editingMaster, TeaExpense: val })}
+                      placeholder="e.g. 20"
+                      placeholderTextColor={colors.dark.textMuted}
+                      keyboardType="numeric"
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Bus Charges per day (₹)</Text>
+                  <View style={styles.masterInputContainer}>
+                    <TextInput
+                      style={styles.masterTextInput}
+                      value={editingMaster.BusExpense}
+                      onChangeText={(val) => setEditingMaster({ ...editingMaster, BusExpense: val })}
+                      placeholder="e.g. 50"
+                      placeholderTextColor={colors.dark.textMuted}
+                      keyboardType="numeric"
+                    />
+                  </View>
+                </View>
+              </ScrollView>
+
+              <Pressable
+                style={[
+                  styles.submitButtonLifting,
+                  saveMasterSettingsMutation.isPending && styles.submitButtonDisabled
+                ]}
+                onPress={() => saveMasterSettingsMutation.mutate()}
+                disabled={saveMasterSettingsMutation.isPending}
+              >
+                <Text style={styles.submitButtonText}>
+                  {saveMasterSettingsMutation.isPending ? 'Saving...' : 'Save Settings'}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+
+        {/* 🧱 Lifting Rates Modal */}
+        <Modal
+          visible={isLiftingRatesVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setIsLiftingRatesVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.bottomSheet}>
+              <View style={styles.bottomSheetHeader}>
+                <Text style={styles.bottomSheetTitle}>Manage Lifting Rates (₹)</Text>
+                <Pressable style={styles.closeSheetBtn} onPress={() => setIsLiftingRatesVisible(false)}>
+                  <X color={colors.dark.textSecondary} size={20} />
+                </Pressable>
+              </View>
+
+              {/* Material Tabs Selector */}
+              <View style={styles.materialTabsContainer}>
+                {(['M.Sand', 'Jally', 'Sengal'] as const).map((mat) => (
+                  <Pressable
+                    key={mat}
+                    style={[
+                      styles.materialTabButton,
+                      selectedLiftingMaterial === mat && styles.materialTabButtonActive
+                    ]}
+                    onPress={() => setSelectedLiftingMaterial(mat)}
+                  >
+                    <Text
+                      style={[
+                        styles.materialTabButtonText,
+                        selectedLiftingMaterial === mat && styles.materialTabButtonTextActive
+                      ]}
+                    >
+                      {mat}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <ScrollView style={{ marginBottom: 20 }}>
+                {/* Rows for each floor for the selected material */}
+                {['G.Floor', '1st floor', '2nd floor', '3rd floor'].map((floor) => {
+                  const key = `${selectedLiftingMaterial}_${floor}`;
+                  const val = editingLiftingRates[key] || '0';
+                  return (
+                    <View key={floor} style={styles.liftingRateRow}>
+                      <Text style={styles.liftingFloorLabel}>{floor}</Text>
+                      <View style={styles.liftingInputWrapper}>
+                        <Text style={styles.currencyPrefix}>₹</Text>
+                        <TextInput
+                          style={styles.liftingTextInput}
+                          value={val}
+                          onChangeText={(text) => {
+                            setEditingLiftingRates({
+                              ...editingLiftingRates,
+                              [key]: text
+                            });
+                          }}
+                          keyboardType="numeric"
+                          placeholder="0"
+                          placeholderTextColor={colors.dark.textMuted}
+                        />
+                      </View>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+
+              <Pressable
+                style={[
+                  styles.submitButtonLifting,
+                  saveLiftingRatesMutation.isPending && styles.submitButtonDisabled
+                ]}
+                onPress={() => saveLiftingRatesMutation.mutate()}
+                disabled={saveLiftingRatesMutation.isPending}
+              >
+                <Text style={styles.submitButtonText}>
+                  {saveLiftingRatesMutation.isPending ? 'Saving...' : 'Save Rates'}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </SafeAreaView>
   );
@@ -2195,7 +2195,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#00BCD4',
   },
   topTabButtonActiveLifting: {
-    backgroundColor: '#E91E63',
+    backgroundColor: '#bd1ee9ff',
   },
   topTabButtonText: {
     color: colors.dark.textSecondary,
@@ -2322,7 +2322,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   submitButtonLifting: {
-    backgroundColor: '#E91E63',
+    backgroundColor: '#bd1ee9ff',
     borderRadius: 10,
     padding: 14,
     alignItems: 'center',
@@ -2330,8 +2330,8 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   formChipActiveLifting: {
-    backgroundColor: '#E91E63',
-    borderColor: '#E91E63',
+    backgroundColor: '#bd1ee9ff',
+    borderColor: '#bd1ee9ff',
   },
   formChipTextActiveLifting: {
     color: '#FFFFFF',
