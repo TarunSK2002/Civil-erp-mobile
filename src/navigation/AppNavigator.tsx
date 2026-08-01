@@ -33,6 +33,11 @@ import SiteReportScreen from '../screens/reports/SiteReportScreen';
 import LabourReportScreen from '../screens/reports/LabourReportScreen';
 import UserManagementScreen from '../screens/admin/UserManagementScreen';
 
+// Phase 5 Screens
+import DprScreen from '../screens/dpr/DprScreen';
+import GpsAttendanceScreen from '../screens/attendance/GpsAttendanceScreen';
+import ExportScreen from '../screens/exports/ExportScreen';
+
 // ──── Home / Dashboard Stack ──────────────────────────────────────────────────
 
 const HomeStack = createNativeStackNavigator();
@@ -50,6 +55,21 @@ function HomeStackNavigator() {
         name="DashboardScreen"
         component={DashboardScreen}
         options={{ headerShown: false }}
+      />
+      <HomeStack.Screen
+        name="DPR"
+        component={DprScreen}
+        options={{ title: 'Daily Progress Reports' }}
+      />
+      <HomeStack.Screen
+        name="GpsAttendance"
+        component={GpsAttendanceScreen}
+        options={{ title: 'GPS Attendance' }}
+      />
+      <HomeStack.Screen
+        name="Export"
+        component={ExportScreen}
+        options={{ title: 'Excel & PDF Exports' }}
       />
       <HomeStack.Screen
         name="Reports"

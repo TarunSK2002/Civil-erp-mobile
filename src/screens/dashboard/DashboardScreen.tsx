@@ -23,7 +23,10 @@ import {
   Wallet,
   Layers,
   BarChart3,
-  Shield
+  Shield,
+  FileText,
+  MapPin,
+  FileSpreadsheet
 } from 'lucide-react-native';
 
 export default function DashboardScreen() {
@@ -110,6 +113,27 @@ export default function DashboardScreen() {
       screen: 'ShiftMaster',
       bgColor: 'rgba(139, 92, 246, 0.12)',
       iconColor: '#8b5cf6',
+    },
+    {
+      title: 'DPR Progress',
+      icon: FileText,
+      screen: 'DPR',
+      bgColor: 'rgba(255, 179, 0, 0.12)',
+      iconColor: '#FFB300',
+    },
+    {
+      title: 'GPS Attendance',
+      icon: MapPin,
+      screen: 'GpsAttendance',
+      bgColor: 'rgba(16, 185, 129, 0.12)',
+      iconColor: '#10b981',
+    },
+    {
+      title: 'Excel / PDF Export',
+      icon: FileSpreadsheet,
+      screen: 'Export',
+      bgColor: 'rgba(59, 130, 246, 0.12)',
+      iconColor: '#3b82f6',
     },
     {
       title: 'Material Types',
