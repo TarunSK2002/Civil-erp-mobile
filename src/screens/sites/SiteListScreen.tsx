@@ -127,7 +127,7 @@ export default function SiteListScreen() {
             { text: 'Cancel', style: 'cancel' },
             {
               text: 'Proceed',
-              onPress: (reason) => {
+              onPress: (reason?: string) => {
                 if (!reason || !reason.trim()) {
                   Alert.alert('Edit Blocked', 'You must specify a reason for editing.');
                   return;
